@@ -3,7 +3,7 @@ import io from "socket.io-client";
 
 const token = localStorage.getItem("token");
 
-const socket = io("${process.env.REACT_APP_API_BASE}", {
+const socket = io("https://govind-jwellers.onrender.com", {
   auth: { token: token ? `Bearer ${token}` : "" }, // Ensure token is provided
 });
 

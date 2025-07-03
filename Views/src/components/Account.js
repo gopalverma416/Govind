@@ -19,7 +19,7 @@ const Account = () => {
     }
 
     axios
-      .get(`${process.env.REACT_APP_API_BASE}/api/users/${userId}`)
+      .get(`https://govind-jwellers.onrender.com/api/users/${userId}`)
       .then((response) => {
         console.log("User Data:", response.data);
         setUser(response.data.user);

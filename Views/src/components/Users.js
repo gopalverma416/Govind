@@ -16,7 +16,7 @@ const Users = () => {
     }
 
     axios
-      .get("${process.env.REACT_APP_API_BASE}/api/users", {
+      .get("https://govind-jwellers.onrender.com/api/users", {
         headers: { Authorization: `Bearer ${token}` }, // Send token for auth
       })
       .then((response) => {

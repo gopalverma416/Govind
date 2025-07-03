@@ -75,7 +75,7 @@ const fileInputRef2 = useRef(null);
   const fetchItems = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("${process.env.REACT_APP_API_BASE}/api/items");
+      const response = await fetch("https://govind-jwellers.onrender.com/api/items");
       const data = await response.json();
       if (response.ok) setItems(data);
       else showNotification("Failed to fetch items.", "error");
@@ -90,7 +90,7 @@ const fileInputRef2 = useRef(null);
       setIsLoading(true);
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Token not found. Please log in.");
-      const response = await fetch("${process.env.REACT_APP_API_BASE}/api/admin/payment", {
+      const response = await fetch("https://govind-jwellers.onrender.com/api/admin/payment", {
         headers: { Authorization: `Bearer ${token}` },
       });
   
@@ -135,7 +135,7 @@ useEffect(() => {
   }, [activeCategory]);
   const fetchAnalyticsData = async () => {
     try {
-      const response = await axios.get("${process.env.REACT_APP_API_BASE}/api/admin/orders-stats");
+      const response = await axios.get("https://govind-jwellers.onrender.com/api/admin/orders-stats");
       setAnalyticsData(response.data);
     } catch (error) {
       console.error("Error fetching analytics data:", error);
@@ -166,7 +166,7 @@ useEffect(() => {
   //   console.log("matter started");
   //   try {
   //     setIsLoading(true);
-  //     const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/items", formData, {
+  //     const response = await axios.post("https://govind-jwellers.onrender.com/api/items", formData, {
   //       headers: { "Content-Type": "multipart/form-data" },
   //     });
 
@@ -207,7 +207,7 @@ useEffect(() => {
   
     try {
       setIsLoading(true);
-      const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/multiple", formData, {
+      const response = await axios.post("https://govind-jwellers.onrender.com/api/multiple", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
   
@@ -253,7 +253,7 @@ useEffect(() => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem("token");
-      const response = await fetch(`${process.env.REACT_APP_API_BASE}/api/items/remove/${itemId}`, {
+      const response = await fetch(`https://govind-jwellers.onrender.com/api/items/remove/${itemId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -292,8 +292,8 @@ useEffect(() => {
       const token = localStorage.getItem("token");
       const endpoint =
         type === "sketch"
-          ? "${process.env.REACT_APP_API_BASE}/api/admin/upload-sketch"
-          : "${process.env.REACT_APP_API_BASE}/api/admin/upload";
+          ? "https://govind-jwellers.onrender.com/api/admin/upload-sketch"
+          : "https://govind-jwellers.onrender.com/api/admin/upload";
 
       const response = await fetch(endpoint, {
         method: "POST",

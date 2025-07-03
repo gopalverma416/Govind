@@ -22,7 +22,7 @@ const Purchase = () => {
 
     setIsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_BASE}/api/cart/${userId}`)
+      .get(`https://govind-jwellers.onrender.com/api/cart/${userId}`)
       .then((response) => {
         setCartItems(response.data.cart || []);
         setIsLoading(false);
@@ -42,9 +42,9 @@ const Purchase = () => {
     try {
       console.log("Removing Item:", itemId._id);
       console.log("User ID:", userId);
-      await axios.delete(`${process.env.REACT_APP_API_BASE}/api/cart/remove/${userId}/${itemId._id}`);
+      await axios.delete(`https://govind-jwellers.onrender.com/api/cart/remove/${userId}/${itemId._id}`);
      
-      const response = await axios.get(`${process.env.REACT_APP_API_BASE}/api/cart/${userId}`);
+      const response = await axios.get(`https://govind-jwellers.onrender.com/api/cart/${userId}`);
       setCartItems(response.data.cart || []);
 
     } catch (error) {

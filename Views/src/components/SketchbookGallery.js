@@ -9,7 +9,7 @@ const SketchbookGallery = () => {
   useEffect(() => {
     const fetchSketches = async () => {
       try {
-        const response = await axios.get("${process.env.REACT_APP_API_BASE}/api/admin/sketch"); // Adjust API URL as needed
+        const response = await axios.get("https://govind-jwellers.onrender.com/api/admin/sketch"); // Adjust API URL as needed
         setSketches(response.data);
         setFlipped(Array(response.data.length).fill(false));
       } catch (error) {

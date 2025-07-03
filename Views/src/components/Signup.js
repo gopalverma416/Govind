@@ -29,7 +29,7 @@ const Signup = () => {
     setError(null);
 
     try {
-      const res = await axios.post("${process.env.REACT_APP_API_BASE}/api/auth/signup", formData);
+      const res = await axios.post("https://govind-jwellers.onrender.com/api/auth/signup", formData);
       localStorage.setItem("token", res.data.token);
       navigate("/users"); // Redirect to users page after signup
     } catch (err) {

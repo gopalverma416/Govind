@@ -8,7 +8,7 @@ const Slideshow = () => {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const response = await fetch("${process.env.REACT_APP_API_BASE}/api/admin/slideshow");
+        const response = await fetch("https://govind-jwellers.onrender.com/api/admin/slideshow");
         const data = await response.json();
         if (response.ok) {
           setSlides(data);

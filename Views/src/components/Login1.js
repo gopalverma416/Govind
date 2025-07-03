@@ -10,7 +10,7 @@ const Login1 = () => {
     const token = response.credential;
 
     try {
-      const res = await fetch('${process.env.REACT_APP_API_BASE}/api/auth/google-login', {
+      const res = await fetch('https://govind-jwellers.onrender.com/api/auth/google-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),

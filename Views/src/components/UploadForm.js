@@ -45,7 +45,7 @@ const UploadForm = () => {
     data.append("image2", formData.image2);
 
     try {
-      const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/multiple", data, {
+      const response = await axios.post("https://govind-jwellers.onrender.com/api/multiple", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       console.log("Upload Successful:", response.data);
