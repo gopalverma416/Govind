@@ -18,7 +18,7 @@ const ForgotPassword = () => {
 
 
   // Base API URL
-  const API_URL = "http://localhost:5005/api/auth";
+  const API_URL = "${process.env.REACT_APP_API_BASE}/api/auth";
 
   const handleSendOtp = async (e) => {
     e.preventDefault();

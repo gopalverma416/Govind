@@ -18,7 +18,7 @@ const PaymentPage = () => {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const response = await axios.get(`http://localhost:5005/api/cart/${userId}`);
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE}/api/cart/${userId}`);
         if (response.data.cart) {
           setCart(response.data.cart);
           setTotalPrice(response.data.cart.reduce((sum, item) => sum + item.itemId.price * item.quantity, 0));
@@ -34,7 +34,7 @@ const PaymentPage = () => {
   const handlePayment = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:5005/api/payment", {
+      const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/payment", {
         userId,
         ...userDetails,
         paymentMethod,

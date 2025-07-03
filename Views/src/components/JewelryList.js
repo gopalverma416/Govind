@@ -31,7 +31,7 @@ const JewelryList = () => {
   const userId = getUserIdFromToken();
 
   useEffect(() => {
-    axios.get("http://localhost:5005/api/items/categories")
+    axios.get("${process.env.REACT_APP_API_BASE}/api/items/categories")
       .then((response) => setCategories(["All", ...response.data])) // Add "All" as the default option
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
@@ -39,14 +39,14 @@ const JewelryList = () => {
 
   useEffect(() => {
     axios
-      .get( selectedCategory === "All" ?   "http://localhost:5005/api/items" : 
-       `http://localhost:5005/api/items/category/${selectedCategory}`)
+      .get( selectedCategory === "All" ?   "${process.env.REACT_APP_API_BASE}/api/items" : 
+       `${process.env.REACT_APP_API_BASE}/api/items/category/${selectedCategory}`)
       .then((response) => setItems(response.data))
       .catch((error) => console.error("Error fetching items:", error));
 
     if (userId) {
       axios
-        .get(`http://localhost:5005/api/cart/${userId}`)
+        .get(`${process.env.REACT_APP_API_BASE}/api/cart/${userId}`)
         .then((response) => setCart(response.data.items || []))
         .catch((error) => console.error("Error fetching cart:", error));
     }
@@ -84,7 +84,7 @@ const JewelryList = () => {
     formData.append("price", price);
 
     try {
-      const response = await axios.post("http://localhost:5005/api/items", formData, {
+      const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/items", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -110,7 +110,7 @@ const JewelryList = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5005/api/cart/add", {
+      const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/cart/add", {
         userId,
         itemId: item._id,
         name: item.name,

@@ -3,7 +3,7 @@ import io from "socket.io-client";
 
 const token = localStorage.getItem("token");
 
-const socket = io("http://localhost:5005", {
+const socket = io("${process.env.REACT_APP_API_BASE}", {
   auth: { token: token ? `Bearer ${token}` : "" }, // Ensure token is provided
 });
 

@@ -45,7 +45,7 @@ const ProductDetails = () => {
   };
 
   useEffect(() => {
-    axios.get(`http://localhost:5005/api/items/${id}`)
+    axios.get(`${process.env.REACT_APP_API_BASE}/api/items/${id}`)
       .then((response) => setItem(response.data))
       .catch((error) => console.error("Error fetching product details:", error));
   }, [id]);
@@ -76,7 +76,7 @@ const ProductDetails = () => {
     }
 
     try {
-      await axios.post("http://localhost:5005/api/cart/add", {
+      await axios.post("${process.env.REACT_APP_API_BASE}/api/cart/add", {
         userId,
         itemId: item._id,
         name: item.name,

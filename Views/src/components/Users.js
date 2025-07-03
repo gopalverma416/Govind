@@ -16,7 +16,7 @@ const Users = () => {
     }
 
     axios
-      .get("http://localhost:5005/api/users", {
+      .get("${process.env.REACT_APP_API_BASE}/api/users", {
         headers: { Authorization: `Bearer ${token}` }, // Send token for auth
       })
       .then((response) => {

@@ -25,7 +25,7 @@ const UserDetailsForm = () => {
     console.log("button is clicked");
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:5005/api/user-details", {
+      const response = await axios.post("${process.env.REACT_APP_API_BASE}/api/user-details", {
         userId,
         ...formData,
       });

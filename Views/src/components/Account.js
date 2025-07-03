@@ -19,7 +19,7 @@ const Account = () => {
     }
 
     axios
-      .get(`http://localhost:5005/api/users/${userId}`)
+      .get(`${process.env.REACT_APP_API_BASE}/api/users/${userId}`)
       .then((response) => {
         console.log("User Data:", response.data);
         setUser(response.data.user);

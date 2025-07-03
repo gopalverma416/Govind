@@ -10,17 +10,11 @@ const paymentRoutes = require("./routes/payments");
 const multiple=require("./routes/multiple");
 
 
-
-
-
 // const { fullCloudinaryTest } = require('./cloudinaryTest');
 
 const connectDB = require("./db");
 require("dotenv").config();
 console.log("JWT_SECRET:", process.env.JWT_SECRET); // Debugging line
-
-
-
 
 const app = express();
 
@@ -31,11 +25,17 @@ const server = http.createServer(app)
 initializeSocket(server);
 
 
-
-
-
 // Middleware
-app.use(cors({ origin: "*" })); // Allow all origins (configure as needed)
+const allowedOrigins = [
+    "http://localhost:3000", // dev
+    "https://govind-ochre.vercel.app" // your Vercel frontend
+  ];
+  
+  app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+  
 app.use(express.json()); // Parse JSON request body
 const itemRoutes = require('./routes/items');
 const  userDetailsRoutes= require('./routes/user');

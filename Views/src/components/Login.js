@@ -22,7 +22,7 @@ const Login = () => {
     setError(null);
     
     try {
-      const res = await axios.post("http://localhost:5005/api/auth/login", formData);
+      const res = await axios.post("${process.env.REACT_APP_API_BASE}/api/auth/login", formData);
       console.log("API response:", res); // Log the response to inspect the data
       
       if (res.data.token) {
