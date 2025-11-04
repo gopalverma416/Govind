@@ -80,7 +80,7 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ msg: "Internal Server Error" });
 });
-
+const job=require('./cron');
 // Start Server
 const PORT = process.env.PORT || 5005;
 server.listen(PORT, () => {
