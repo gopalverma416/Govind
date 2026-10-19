@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ShoppingCartIcon, PlusIcon, HeartIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { getUserIdFromToken } from "../utils/auth";
 import Chat from "./Chat";
 import Footbar from "./Footbar";
 import React from 'react';
-import { ChevronDown, ChevronUp } from "lucide-react";
+import LocalNav from "./site/LocalNav";
+import { fetchCategories, titleCase } from "../lib/api";
 
 // const categories = ["All", "Rings", "Necklaces", "Earrings", "Bracelets"];
 
@@ -21,8 +22,9 @@ const JewelryList = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("category") || "All";
+  const setSelectedCategory = (category) => setSearchParams(category === "All" ? {} : { category });
 
   const [hoveredItem, setHoveredItem] = useState(null);
   const fileInputRef = useRef(null);
@@ -31,8 +33,8 @@ const JewelryList = () => {
   const userId = getUserIdFromToken();
 
   useEffect(() => {
-    axios.get("https://govind-jwellers.onrender.com/api/items/categories")
-      .then((response) => setCategories(["All", ...response.data])) // Add "All" as the default option
+    fetchCategories()
+      .then((data) => setCategories(["All", ...data.filter(Boolean)])) // Add "All" as the default option
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
@@ -142,7 +144,7 @@ const JewelryList = () => {
 
   return (
     
-    <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen pt-20">
+    <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen pt-12">
       
       {/* Header */}
       {/* <header className="bg-white shadow-md py-4 px-8 sticky top-0 z-10">
@@ -186,63 +188,17 @@ const JewelryList = () => {
           </div>
         </div>
       </header> */}
-       {/* Sidebar - Added a sidebar for categories */}
-       <div className="relative w-64 mb-4">
-      <button
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="w-full text-left py-3 px-4 rounded-xl 
-        bg-gradient-to-br from-white to-gray-50 
-        shadow-lg border border-gray-200 
-        flex justify-between items-center 
-        transition duration-300 ease-in-out 
-        hover:shadow-xl hover:border-yellow-200 
-        focus:outline-none focus:ring-2 focus:ring-yellow-400"
-      >
-        <span className="text-gray-800 font-medium">{selectedCategory}</span>
-        <div className="text-gray-600 transition transform duration-200 
-        hover:text-yellow-600 
-        hover:scale-110">
-          {isDropdownOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </div>
-      </button>
-      
-      {isDropdownOpen && (
-        <div 
-          className="absolute w-full bg-white 
-          shadow-2xl mt-2 rounded-xl border 
-          border-gray-200 z-50 
-          animate-slide-down 
-          overflow-hidden"
-        >
-          <ul className="py-1">
-            {categories.map((category) => (
-              <li key={category} className="group">
-                <button
-                  className={`w-full text-left py-3 px-4 
-                  transition duration-200 ease-in-out 
-                  ${
-                    selectedCategory === category
-                      ? "bg-yellow-500 text-white font-semibold"
-                      : "hover:bg-yellow-50 text-gray-700 hover:text-yellow-800 hover:pl-5"
-                  } 
-                  group-hover:bg-gray-50`}
-                  onClick={() => {
-                    setSelectedCategory(category);
-
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  <span className="transition duration-300 ease-in-out">
-                    {category}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-
+      <LocalNav
+        title={selectedCategory === "All" ? "Jewellery" : titleCase(selectedCategory)}
+        items={categories.map((category) => ({ key: category, label: category === "All" ? "All" : titleCase(category) }))}
+        activeKey={selectedCategory}
+        onSelect={setSelectedCategory}
+        action={
+          <button type="button" onClick={() => navigate("/purchase")} className="btn-filled px-[11px] py-[4px] text-[12px]">
+            Bag{cart.length > 0 ? ` (${cart.length})` : ""}
+          </button>
+        }
+      />
 
       <div className="max-w-7xl mx-auto p-8">
         {/* Add Item Form */}
@@ -517,12 +473,6 @@ const JewelryList = () => {
       {/* Footer */}
 <div className="mt-20 pt-10">
 <Footbar />
-<footer className="bg-gray-800 text-white">
-  <div className="max-w-7xl mx-auto px-8 text-center space-y-4">
-    <p>© 2025 Elegant Jewels. All rights reserved.</p>
-    <p className="text-gray-400 text-sm">Premium handcrafted jewelry for every occasion.</p>
-  </div>
-</footer>
 
 </div> 
     </div>

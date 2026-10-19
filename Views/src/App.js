@@ -1,10 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Users from './components/Users';
 import Signup from './components/Signup';
 import Login from './components/Login';
 import Home from './components/Home';
-import Navbar from './components/Navbar'
+import GlobalNav from './components/site/GlobalNav';
 import { Navigate } from 'react-router-dom';
 import Purchase from './components/Purchase';
 import Jwellery from './components/JewelryList';
@@ -44,7 +44,8 @@ const App = () => {
 
   return (
     <BrowserRouter>
-     <Navbar/>
+      <AnalyticsTracker />
+      <GlobalNav />
 
       <Routes>
         <Route path="/" element={<Home/>} />

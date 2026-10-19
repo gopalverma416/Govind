@@ -47,6 +47,16 @@ router.get("/", async (req, res) => {
     res.status(500).json({ msg: "Internal Server Error" });
   }
 });
+// fetch all categories (must be registered before "/:id")
+router.get("/categories", async (req, res) => {
+  try {
+    const categories = await Item.distinct("category"); // Fetch unique categories
+    res.json(categories);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
 router.get("/:id", async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
@@ -128,16 +138,6 @@ router.get("/category/:category", async (req, res) => {
     res.json(products);
   } catch (error) {
     console.error("Error fetching category items:", error.message);
-    res.status(500).json({ message: "Server Error" });
-  }
-});
-//fetch all categories
-router.get("/categories", async (req, res) => {
-  try {
-    const categories = await Item.distinct("category"); // Fetch unique categories
-    res.json(categories);
-  } catch (error) {
-    console.error("Error fetching categories:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
