@@ -43,7 +43,7 @@ const UserDetailsForm = () => {
       <div className="w-full max-w-lg bg-white shadow-2xl rounded-2xl overflow-hidden">
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
-            User Details
+            Where should we deliver?
           </h2>
 
           <div className="grid grid-cols-2 gap-6">
@@ -98,7 +98,7 @@ const UserDetailsForm = () => {
 
           <div className="space-y-2">
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Phone number
             </label>
             <input
               id="phone"
@@ -113,7 +113,7 @@ const UserDetailsForm = () => {
 
           <div className="space-y-2">
             <label htmlFor="street" className="block text-sm font-medium text-gray-700">
-              Street Name
+              Street address
             </label>
             <input
               id="street"
@@ -122,7 +122,7 @@ const UserDetailsForm = () => {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-              placeholder="Enter street name"
+              placeholder="House no. and street"
             />
           </div>
 
@@ -162,7 +162,7 @@ const UserDetailsForm = () => {
             type="submit"
             className="w-full bg-blue-600 text-white py-3.5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-[1.02]"
           >
-            Proceed to Payment
+            Continue to payment
           </button>
         </form>
       </div>

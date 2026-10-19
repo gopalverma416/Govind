@@ -13,7 +13,7 @@ const Account = () => {
 
   useEffect(() => {
     if (!userId) {
-      alert("Please log in to access your account.");
+      alert("Sign in to see your account.");
       navigate("/login");
       return;
     }
@@ -59,7 +59,7 @@ const Account = () => {
           <div className="bg-gradient-to-r from-yellow-500 to-amber-600 p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                <Award size={24} /> Gold Member
+                <Award size={24} /> Govind Account
               </h2>
               <button
                 onClick={() => navigate("/edit-profile")}
@@ -136,7 +136,7 @@ const Account = () => {
                 onClick={handleLogout}
                 className="mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-semibold flex items-center justify-center gap-2 hover:from-amber-600 hover:to-yellow-700 transition shadow-md"
               >
-                <LogOut size={18} /> Sign Out
+                <LogOut size={18} /> Sign out
               </button>
             </div>
           )}

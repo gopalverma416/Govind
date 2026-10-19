@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { PROMISES } from "../content/site";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getUserIdFromToken } from "../utils/auth";
@@ -15,7 +16,7 @@ const Purchase = () => {
 
   useEffect(() => {
     if (!userId) {
-      alert("Please log in to view your cart.");
+      alert("Sign in to see your bag.");
       navigate("/login");
       return;
     }
@@ -66,9 +67,9 @@ const Purchase = () => {
               <div>
                 <h2 className="text-4xl font-bold flex items-center gap-4">
                   <ShoppingCart className="h-10 w-10 text-white" />
-                  Gold Checkout
+                  Your Bag
                 </h2>
-                <p className="text-gold-100 mt-2 text-lg">Complete your luxury purchase</p>
+                <p className="text-gold-100 mt-2 text-lg">Review your pieces, then check out securely.</p>
               </div>
               <div className="bg-white/20 p-3 rounded-full">
                 <Package className="h-8 w-8 text-white" />
@@ -88,7 +89,7 @@ const Purchase = () => {
                 <div className="mb-10">
                   <h3 className="text-2xl font-semibold text-gold-800 mb-6 flex items-center gap-3">
                     <Package className="h-7 w-7 text-gold-600" />
-                    Your Selected Jewelry
+                    In your bag
                   </h3>
 
                   {cartItems.length > 0 ? (
@@ -132,12 +133,12 @@ const Purchase = () => {
                   ) : (
                     <div className="text-center py-16 bg-gold-50 rounded-2xl border border-gold-200">
                       <ShoppingCart className="h-16 w-16 text-gold-400 mx-auto mb-6" />
-                      <p className="text-2xl text-gold-700 mb-4">Your cart is empty</p>
+                      <p className="text-2xl text-gold-700 mb-4">Your bag is empty.</p>
                       <button
                         onClick={() => navigate("/")}
                         className="px-6 py-3 bg-gold-500 text-white rounded-xl hover:bg-gold-600 transition-colors"
                       >
-                        Continue Shopping
+                        Continue shopping
                       </button>
                     </div>
                   )}
@@ -150,7 +151,7 @@ const Purchase = () => {
                     <div>
                       <h3 className="text-2xl font-semibold text-gold-800 mb-6 flex items-center gap-3">
                         <CreditCard className="h-7 w-7 text-gold-600" />
-                        Payment Method
+                        How would you like to pay?
                       </h3>
                       <select
                         value={paymentMethod}
@@ -166,7 +167,7 @@ const Purchase = () => {
                     {/* Order Summary */}
                     <div>
                       <h3 className="text-2xl font-semibold text-gold-800 mb-6">
-                        Order Summary
+                        Summary
                       </h3>
                       <div className="bg-gold-100 p-6 rounded-2xl border border-gold-200">
                         <div className="space-y-3 mb-4">
@@ -197,9 +198,9 @@ const Purchase = () => {
                 {cartItems.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
                     {[
-                      { icon: Truck, title: "Free Insured Delivery", desc: "On all orders" },
-                      { icon: Shield, title: "100% Authentic", desc: "BIS hallmarked gold" },
-                      { icon: Package, title: "Lifetime Exchange", desc: "Best value guarantee" }
+                      { icon: Truck, title: PROMISES.delivery.title, desc: PROMISES.delivery.detail },
+                      { icon: Shield, title: PROMISES.hallmark.title, desc: PROMISES.hallmark.detail },
+                      { icon: Package, title: PROMISES.exchange.title, desc: PROMISES.exchange.detail }
                     ].map((benefit, index) => (
                       <div 
                         key={index} 

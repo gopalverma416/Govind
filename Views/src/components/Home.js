@@ -5,7 +5,9 @@ import Ribbon from './site/Ribbon';
 import HeroUnit from './site/HeroUnit';
 import PromoTile from './site/PromoTile';
 import MediaGallery from './site/MediaGallery';
+import MetalRates from './site/MetalRates';
 import { fetchItems, fetchSketches, fetchSlides, formatPrice, titleCase } from '../lib/api';
+import { CATEGORY_COPY, DEFAULT_CATEGORY_COPY } from '../content/site';
 
 const FALLBACK_HERO = 'https://res.cloudinary.com/denstpvkw/image/upload/v1741432943/jewelry-images/cwcnzqtrrb9kaagfphgg.webp';
 
@@ -45,29 +47,31 @@ const Home = () => {
     const categoryTiles = [...byCategory.entries()].map(([category, pieces]) => {
       const name = titleCase(category);
       const to = `/list?category=${encodeURIComponent(category)}`;
+      const copy = CATEGORY_COPY[category.toLowerCase()] || DEFAULT_CATEGORY_COPY;
       return {
         key: category,
         title: name,
-        subtitle: `From ${formatPrice(Math.min(...pieces.map((p) => p.price)))}`,
-        caption: `${pieces.length} ${pieces.length === 1 ? 'design' : 'designs'}`,
+        subtitle: copy.tagline,
+        caption: `From ${formatPrice(Math.min(...pieces.map((p) => p.price)))}`,
         image: pieces[0].images?.[0],
         imageAlt: pieces[0].name,
-        ctas: [{ label: `Shop ${name}`, to }, { label: 'Learn more', to: `/product/${pieces[0]._id}` }],
+        ctas: [{ label: 'Shop', to }, { label: 'Learn more', to: `/product/${pieces[0]._id}` }],
       };
     });
 
     const extraTiles = [
       {
         key: 'bespoke',
-        title: 'Made just for you.',
-        subtitle: 'Bring us an idea. We’ll sketch it, then craft it.',
-        ctas: [{ label: 'Chat with a designer', to: '/chat' }],
+        title: 'Bespoke',
+        subtitle: 'Your idea. Our hands.',
+        caption: 'Share a sketch, a photo or just a feeling. Our designers take it from there.',
+        ctas: [{ label: 'Start a design', to: '/chat' }],
         image: sketches[0]?.imageUrl,
         imageAlt: 'A design from the Govind sketchbook',
       },
       isAuthenticated
-        ? { key: 'account', title: 'Your Govind account.', subtitle: 'Your bag, orders and details in one place.', ctas: [{ label: 'Go to account', to: '/account' }, { label: 'View bag', to: '/purchase' }] }
-        : { key: 'join', title: 'Join Govind.', subtitle: 'Save your bag and check out faster.', ctas: [{ label: 'Create account', to: '/signup' }, { label: 'Sign in', to: '/login' }] },
+        ? { key: 'account', title: 'Govind Account', subtitle: 'Everything you love, in one place.', caption: 'Your bag, your orders and your delivery details.', ctas: [{ label: 'Go to your account', to: '/account' }, { label: 'View bag', to: '/purchase' }] }
+        : { key: 'join', title: 'Govind Account', subtitle: 'Everything you love, in one place.', caption: 'Save your bag, check out faster and keep track of your orders.', ctas: [{ label: 'Create account', to: '/signup' }, { label: 'Sign in', to: '/login' }] },
     ];
 
     // Keep the two-column grid even
@@ -82,30 +86,31 @@ const Home = () => {
 
   return (
     <main className="bg-white pt-12">
-      <Ribbon linkText="Chat with a designer" to="/chat">
-        Every piece starts as a sketch. Commission one of your own.
+      <Ribbon linkText="Talk to a designer" to="/chat">
+        Every Govind piece begins as a hand-drawn sketch. Commission one of your own.
       </Ribbon>
+      <MetalRates />
 
       <HeroUnit
         theme="dark"
         eyebrow="Govind Jewellers"
-        title="Timeless elegance."
-        subtitle="Jewellery crafted with passion, designed for generations."
-        ctas={[{ label: 'Shop now', to: '/list' }, { label: 'Explore the sketchbook', to: '/#sketchbook' }]}
+        title="Crafted to be treasured."
+        subtitle="Fine jewellery, drawn by hand and made to last for generations."
+        ctas={[{ label: 'Shop the collection', to: '/list' }, { label: 'See the sketchbook', to: '/#sketchbook' }]}
         images={heroImages}
-        imageAlt="Govind Jewellers collection"
+        imageAlt="The Govind Jewellers collection"
         priority
       />
 
       {newest && (
         <div className="mt-3">
           <HeroUnit
-            eyebrow="New"
+            eyebrow="New arrival"
             title={newest.name}
-            subtitle={newest.description || `From ${formatPrice(newest.price)}${newest.weight ? ` · ${newest.weight} g` : ''}`}
+            subtitle={newest.description || `${formatPrice(newest.price)}${newest.weight ? ` · ${newest.weight} g` : ''}`}
             ctas={[
               { label: 'Learn more', to: `/product/${newest._id}` },
-              ...(newest.category ? [{ label: `Shop ${titleCase(newest.category)}`, to: `/list?category=${encodeURIComponent(newest.category)}` }] : []),
+              { label: 'Buy', to: `/product/${newest._id}` },
             ]}
             images={newest.images || []}
             imageAlt={newest.name}
@@ -122,11 +127,11 @@ const Home = () => {
 
       <MediaGallery
         id="sketchbook"
-        heading="Straight out of the sketchbook."
+        heading="From our sketchbook."
         slides={sketches.map((sketch, i) => ({
           image: sketch.imageUrl,
-          title: `Sketch no. ${i + 1}`,
-          caption: 'Hand-drawn in our studio',
+          title: `Design No. ${String(i + 1).padStart(2, '0')}`,
+          caption: 'Drawn by hand in our studio.',
           cta: { label: 'Make it yours', to: '/chat' },
         }))}
       />

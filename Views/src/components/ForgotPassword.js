@@ -23,7 +23,7 @@ const ForgotPassword = () => {
   const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!email) {
-      setMessage("Please enter a valid email address");
+      setMessage("Enter a valid email address.");
       setStatus("error");
       return;
     }
@@ -31,11 +31,11 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       const response = await axios.post(`${API_URL}/send-otp`, { email });
-      setMessage(response.data.message || "OTP sent successfully to your email!");
+      setMessage(response.data.message || "We’ve sent a code to your email.");
       setStatus("success");
       setStep(2);
     } catch (error) {
-      setMessage(error.response?.data?.msg || "Failed to send OTP. Please try again.");
+      setMessage(error.response?.data?.msg || "We couldn’t send a code. Please try again.");
       setStatus("error");
     } finally {
       setLoading(false);
@@ -45,7 +45,7 @@ const ForgotPassword = () => {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     if (!otp) {
-      setMessage("Please enter the OTP");
+      setMessage("Enter the code we sent to your email.");
       setStatus("error");
       return;
     }
@@ -64,12 +64,12 @@ const ForgotPassword = () => {
         console.warn("Token not found in response:", response.data);
       }
       
-      setMessage(response.data.message || "OTP verified successfully!");
+      setMessage(response.data.message || "Code verified.");
       setStatus("success");
       setStep(3);
     } catch (error) {
       console.error("OTP verification error:", error);
-      setMessage(error.response?.data?.msg || "Invalid OTP. Please try again.");
+      setMessage(error.response?.data?.msg || "That code isn’t right. Please try again.");
       setStatus("error");
     } finally {
       setLoading(false);
@@ -79,19 +79,19 @@ const ForgotPassword = () => {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!newPassword) {
-      setMessage("Please enter a new password");
+      setMessage("Enter a new password.");
       setStatus("error");
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      setMessage("Passwords do not match");
+      setMessage("Those passwords don’t match.");
       setStatus("error");
       return;
     }
     
     if (!token) {
-      setMessage("Session expired. Please restart the password reset process.");
+      setMessage("Your session has expired. Please start again.");
       setStatus("error");
       return;
     }
@@ -106,7 +106,7 @@ const ForgotPassword = () => {
         newPassword 
       });
       
-      setMessage(response.data.message || "Password reset successful!");
+      setMessage(response.data.message || "Your password has been reset.");
       setStatus("success");
       setStep(4);
     } catch (error) {
@@ -115,9 +115,9 @@ const ForgotPassword = () => {
       // More detailed error handling
       if (error.response) {
         console.log("Error response data:", error.response.data);
-        setMessage(error.response.data.msg || "Failed to reset password. Please try again.");
+        setMessage(error.response.data.msg || "We couldn’t reset your password. Please try again.");
       } else if (error.request) {
-        setMessage("No response from server. Please check your connection.");
+        setMessage("We can’t reach Govind right now. Check your connection and try again.");
       } else {
         setMessage("Error: " + error.message);
       }
@@ -135,7 +135,7 @@ const ForgotPassword = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-amber-50">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md border border-amber-200">
-        <h2 className="mb-6 text-2xl font-bold text-center text-amber-800">Reset Your Password</h2>
+        <h2 className="mb-6 text-2xl font-bold text-center text-amber-800">Reset your password.</h2>
         
         {/* Progress indicator */}
         <div className="flex justify-between mb-8">
@@ -146,7 +146,7 @@ const ForgotPassword = () => {
                 {step > i ? <CheckCircle className="w-5 h-5" /> : i}
               </div>
               <span className={`text-xs ${step >= i ? 'text-amber-500' : 'text-amber-300'}`}>
-                {i === 1 ? 'Email' : i === 2 ? 'OTP' : i === 3 ? 'New Password' : 'Done'}
+                {i === 1 ? 'Email' : i === 2 ? 'Code' : i === 3 ? 'Password' : 'Done'}
               </span>
             </div>
           ))}
@@ -166,7 +166,7 @@ const ForgotPassword = () => {
         {step === 1 && (
           <form onSubmit={handleSendOtp}>
             <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">Email Address</label>
+              <label className="block mb-2 text-sm font-medium text-amber-700">Email address</label>
               <div className="relative">
                 <Mail className="absolute w-5 h-5 text-amber-400 left-3 top-3" />
                 <input
@@ -184,7 +184,7 @@ const ForgotPassword = () => {
               className={`w-full p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               disabled={loading}
             >
-              {loading ? 'Sending...' : 'Send OTP'}
+              {loading ? 'Sending…' : 'Send code'}
             </button>
           </form>
         )}
@@ -193,7 +193,7 @@ const ForgotPassword = () => {
         {step === 2 && (
           <form onSubmit={handleVerifyOtp}>
             <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">Verification Code</label>
+              <label className="block mb-2 text-sm font-medium text-amber-700">Verification code</label>
               <div className="relative">
                 <Key className="absolute w-5 h-5 text-amber-400 left-3 top-3" />
                 <input
@@ -221,7 +221,7 @@ const ForgotPassword = () => {
                 className={`w-2/3 p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 disabled={loading}
               >
-                {loading ? 'Verifying...' : 'Verify OTP'}
+                {loading ? 'Verifying…' : 'Verify code'}
               </button>
             </div>
           </form>
@@ -231,7 +231,7 @@ const ForgotPassword = () => {
         {step === 3 && (
           <form onSubmit={handleResetPassword}>
             <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">New Password</label>
+              <label className="block mb-2 text-sm font-medium text-amber-700">New password</label>
               <input
                 type="password"
                 className="w-full p-3 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -243,7 +243,7 @@ const ForgotPassword = () => {
               <p className="mt-1 text-xs text-amber-600">Password must be at least 8 characters long</p>
             </div>
             <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">Confirm Password</label>
+              <label className="block mb-2 text-sm font-medium text-amber-700">Confirm password</label>
               <input
                 type="password"
                 className="w-full p-3 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -267,7 +267,7 @@ const ForgotPassword = () => {
                 className={`w-2/3 p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 disabled={loading}
               >
-                {loading ? 'Resetting...' : 'Reset Password'}
+                {loading ? 'Resetting…' : 'Reset password'}
               </button>
             </div>
           </form>
@@ -277,13 +277,13 @@ const ForgotPassword = () => {
         {step === 4 && (
           <div className="text-center">
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-amber-500" />
-            <h3 className="mb-2 text-xl font-semibold text-amber-800">Password Reset Successful!</h3>
-            <p className="mb-6 text-amber-700">You can now log in with your new password.</p>
+            <h3 className="mb-2 text-xl font-semibold text-amber-800">Your password has been reset.</h3>
+            <p className="mb-6 text-amber-700">Sign in with your new password to continue.</p>
             <button
               className="w-full p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
               onClick={navigateToLogin}
             >
-              Go to Login <ArrowRight className="inline w-4 h-4 ml-1" />
+              Sign in <ArrowRight className="inline w-4 h-4 ml-1" />
             </button>
           </div>
         )}

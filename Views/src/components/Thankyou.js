@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, Home } from 'lucide-react';
+import { BRAND, PROMISES } from '../content/site';
 
 const ThankYouPage = () => {
   return (
@@ -13,24 +14,21 @@ const ThankYouPage = () => {
             strokeWidth={1.5}
           />
           <h1 className="text-3xl font-bold text-white">
-            Thank You for Your Purchase!
+            Thank you for your order.
           </h1>
         </div>
         
         <div className="p-8 text-center">
           <p className="text-lg text-gray-700 mb-6">
-            Your order has been successfully processed. We appreciate your business and hope you enjoy your golden treasures!
+            Your order is confirmed. We’re preparing your pieces with care and will be in touch when they’re on their way.
           </p>
           
           <div className="bg-gold-50 p-4 rounded-lg mb-6 border border-gold-200">
             <h2 className="text-xl font-semibold text-gold-800 mb-2">
-              Order Details
+              What happens next
             </h2>
             <p className="text-gold-700">
-              Order Number: <span className="font-bold">#{Math.floor(Math.random() * 1000000)}</span>
-            </p>
-            <p className="text-gold-700">
-              Estimated Delivery: 3-5 Business Days
+              Estimated delivery: {PROMISES.deliveryEstimate}
             </p>
           </div>
           
@@ -42,18 +40,18 @@ const ThankYouPage = () => {
               className="mr-3 group-hover:animate-bounce" 
               size={24} 
             />
-            Return to Home Page
+            Continue shopping
           </Link>
         </div>
         
         <div className="bg-gold-100 p-4 text-center text-gold-700">
           <p className="text-sm">
-            Questions? Contact our customer support at 
+            Questions about your order? Call us on
             <a 
-              href="tel:+91-7247305879" 
+              href={BRAND.phoneHref} 
               className="font-bold ml-1 hover:text-gold-800"
             >
-              +91-7247305879
+              {BRAND.phone}
             </a>
           </p>
         </div>

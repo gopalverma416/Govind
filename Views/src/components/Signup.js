@@ -47,9 +47,9 @@ const Signup = () => {
           <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg">
             <User className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-amber-900">Create Your Account</h2>
+          <h2 className="mt-6 text-3xl font-extrabold text-amber-900">Create your Govind Account.</h2>
           <p className="mt-2 text-sm text-amber-700">
-            Join our community of gold jewelry enthusiasts
+            One account for your bag, your orders and your bespoke designs.
           </p>
         </div>
 
@@ -65,7 +65,7 @@ const Signup = () => {
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-amber-800">
-                Full Name
+                Full name
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -77,7 +77,7 @@ const Signup = () => {
                   type="text"
                   required
                   className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="John Doe"
+                  placeholder="Full name"
                   onChange={handleChange}
                   value={formData.name}
                 />
@@ -87,7 +87,7 @@ const Signup = () => {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-amber-800">
-                Email Address
+                Email address
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -99,7 +99,7 @@ const Signup = () => {
                   type="email"
                   required
                   className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="email@example.com"
+                  placeholder="name@example.com"
                   onChange={handleChange}
                   value={formData.email}
                 />
@@ -194,7 +194,7 @@ const Signup = () => {
             {/* Address */}
             <div>
               <label htmlFor="address" className="block text-sm font-medium text-amber-800">
-                Delivery Address
+                Delivery address
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -206,7 +206,7 @@ const Signup = () => {
                   required
                   rows="3"
                   className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="123 Main St, City, Country"
+                  placeholder="House no., street, city, pincode"
                   onChange={handleChange}
                   value={formData.address}
                 />
@@ -223,7 +223,7 @@ const Signup = () => {
               {loading ? (
                 <span className="flex items-center">
                   <Loader className="h-5 w-5 mr-2 animate-spin" />
-                  Creating Account...
+                  Creating your account…
                 </span>
               ) : (
                 "Create Account"
@@ -234,7 +234,7 @@ const Signup = () => {
           <div className="flex items-center justify-center mt-6">
             <div className="text-sm">
               <a href="/login" className="font-medium text-amber-600 hover:text-amber-800">
-                Already have an account? Sign in
+                Already have a Govind Account? Sign in
               </a>
             </div>
           </div>

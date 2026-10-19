@@ -14,8 +14,9 @@ import {
   , XIcon 
 } from "@heroicons/react/24/outline";
 
-import { StarIcon } from "@heroicons/react/24/solid";
 import { getUserIdFromToken } from "../utils/auth";
+import { formatPrice, titleCase } from "../lib/api";
+import { PRODUCT_HIGHLIGHTS, PROMISES } from "../content/site";
 import { useNavigate } from "react-router-dom";
 
 const ProductDetails = () => {
@@ -56,22 +57,13 @@ const ProductDetails = () => {
     </div>
   );
 
-  const renderStars = (rating) => {
-    return [...Array(5)].map((_, index) => (
-      <StarIcon 
-        key={index} 
-        className={`h-6 w-6 ${index < Math.floor(rating) ? 'text-yellow-500' : 'text-gray-300'}`} 
-      />
-    ));
-  };
-
   const handleQuantityChange = (change) => {
     setQuantity(Math.max(1, quantity + change));
   };
 
   const addToCart = async (item) => {
     if (!userId) {
-      alert("User is not logged in!");
+      alert("Sign in to add pieces to your bag.");
       return;
     }
 
@@ -84,7 +76,7 @@ const ProductDetails = () => {
         image: item.images[0],
         quantity,
       });
-      alert("Item added to cart successfully!");
+      alert("Added to your bag.");
     } catch (error) {
       console.error("Error adding item to cart:", error);
     }
@@ -129,7 +121,7 @@ const ProductDetails = () => {
                 className="flex-1 p-2 border rounded-l-md"
               />
               <button onClick={handleCopyLink} className="bg-red-600 text-white px-4 py-2 rounded-r-md">
-                Copy URL
+                Copy link
               </button>
             </div>
           </div>
@@ -140,7 +132,7 @@ const ProductDetails = () => {
     <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
       <div className="bg-gradient-to-r from-red-500 to-pink-500 p-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold text-white">Share Your Discovery!</h3>
+          <h3 className="text-xl font-bold text-white">Share this piece</h3>
           <button 
             onClick={() => setIsModalOpen(false)} 
             className="text-white hover:bg-white/20 p-2 rounded-full transition-colors duration-300"
@@ -159,7 +151,7 @@ const ProductDetails = () => {
           />
           <div>
             <p className="text-lg font-semibold text-gray-800">{item.name}</p>
-            <p className="text-sm text-gray-500">Ready to share your find?</p>
+            <p className="text-sm text-gray-500">Send it to someone who’d love it.</p>
           </div>
         </div>
         
@@ -232,12 +224,6 @@ const ProductDetails = () => {
             <h1 className="text-4xl font-bold text-gray-900 mb-4 
               bg-gradient-to-r from-gray-800 to-gray-600 
               text-transparent bg-clip-text">{item.name}</h1>
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="flex">{renderStars(4.2)}</div>
-              <span className="text-gray-600 text-sm bg-gray-100 px-2 py-1 rounded-full">
-                24 Customer Reviews
-              </span>
-            </div>
           </div>
 
           <p className="text-gray-600 leading-relaxed text-lg mb-8 
@@ -246,14 +232,7 @@ const ProductDetails = () => {
           <div className="flex items-center space-x-6 mb-8">
             <span className="text-5xl font-extrabold text-transparent 
               bg-gradient-to-r from-yellow-600 to-yellow-400 
-              bg-clip-text">₹{item.price}</span>
-            <span className="line-through text-gray-400 text-2xl">
-              ₹{(item.price * 1.2).toFixed(2)}
-            </span>
-            <span className="bg-green-100 text-green-800 px-3 py-1.5 
-              rounded-full text-base font-semibold shadow-sm">
-              20% OFF
-            </span>
+              bg-clip-text">{formatPrice(item.price)}</span>
           </div>
 
           {/* Shipping & Security Cards */}
@@ -263,8 +242,8 @@ const ProductDetails = () => {
               transform transition-transform hover:scale-105">
               <TruckIcon className="h-8 w-8 text-blue-500" />
               <div>
-                <h4 className="font-semibold text-gray-800">Free Shipping</h4>
-                <p className="text-sm text-gray-600">On orders over ₹1000</p>
+                <h4 className="font-semibold text-gray-800">{PROMISES.delivery.title}</h4>
+                <p className="text-sm text-gray-600">{PROMISES.delivery.detail}</p>
               </div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 
@@ -272,8 +251,8 @@ const ProductDetails = () => {
               transform transition-transform hover:scale-105">
               <ShieldCheckIcon className="h-8 w-8 text-green-500" />
               <div>
-                <h4 className="font-semibold text-gray-800">Secure Payment</h4>
-                <p className="text-sm text-gray-600">SSL Certified</p>
+                <h4 className="font-semibold text-gray-800">{PROMISES.securePayment.title}</h4>
+                <p className="text-sm text-gray-600">{PROMISES.securePayment.detail}</p>
               </div>
             </div>
           </div>
@@ -283,7 +262,7 @@ const ProductDetails = () => {
             <h3 className="text-xl font-semibold mb-4 text-gray-800 
               flex items-center">
               <SparklesIcon className="h-6 w-6 mr-3 text-yellow-500" />
-              Product Specifications
+              Specifications
             </h3>
             <div className="grid grid-cols-2 gap-4">
               {/* Weight Specification with Attractive Design */}
@@ -293,7 +272,7 @@ const ProductDetails = () => {
                 shadow-md hover:shadow-lg">
                 <ScaleIcon className="h-8 w-8 text-purple-500" />
                 <div>
-                  <h4 className="font-semibold text-gray-800">Product Weight</h4>
+                  <h4 className="font-semibold text-gray-800">Weight</h4>
                   <p className="text-lg text-purple-700 font-bold">
                     {item.weight} {item.weightUnit || 'g'}
                   </p>
@@ -307,9 +286,9 @@ const ProductDetails = () => {
                 shadow-md hover:shadow-lg">
                 <SparklesIcon className="h-8 w-8 text-indigo-500" />
                 <div>
-                  <h4 className="font-semibold text-gray-800">Material</h4>
+                  <h4 className="font-semibold text-gray-800">{item.material ? 'Material' : 'Collection'}</h4>
                   <p className="text-lg text-indigo-700 font-bold">
-                    {item.material || 'Premium Quality'}
+                    {item.material || titleCase(item.category || 'Signature')}
                   </p>
                 </div>
               </div>
@@ -350,7 +329,7 @@ const ProductDetails = () => {
               transform hover:-translate-y-1"
             >
               <ShoppingCartIcon className="h-7 w-7" />
-              <span>Add to Cart</span>
+              <span>Add to Bag</span>
             </button>
             <button 
               onClick={handlePurchase}
@@ -361,7 +340,7 @@ const ProductDetails = () => {
               transform hover:-translate-y-1"
             >
               <GiftIcon className="h-7 w-7 mr-3" />
-              Buy Now
+              Buy
             </button>
           </div>
 
@@ -370,12 +349,10 @@ const ProductDetails = () => {
             <h3 className="text-xl font-semibold mb-4 text-gray-800 
               flex items-center">
               <SparklesIcon className="h-6 w-6 mr-3 text-yellow-500" />
-              Product Details
+              Highlights
             </h3>
             <ul className="space-y-3 text-gray-600 text-base">
-              {["Handcrafted with premium materials", 
-                "Elegant design for any occasion", 
-                "Comes with a protective jewelry box"].map((detail, index) => (
+              {PRODUCT_HIGHLIGHTS.map((detail, index) => (
                 <li key={index} className="flex items-center space-x-3 
                   bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition">
                   <span className="text-green-500">✓</span>

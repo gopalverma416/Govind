@@ -34,7 +34,7 @@ const Login = () => {
       } else {
         // If no token, show an error message
         console.error("Token not found in response data");
-        setError("Login failed. Token not returned.");
+        setError("We couldn’t sign you in. Please try again.");
       }
         
     } catch (err) {
@@ -53,9 +53,9 @@ const Login = () => {
             <User className="h-10 w-10 text-white" />
           </div>
           
-          <h2 className="text-3xl font-bold text-amber-900">Welcome Back</h2>
+          <h2 className="text-3xl font-bold text-amber-900">Sign in to Govind.</h2>
          
-          <p className="mt-2 text-amber-700">Sign in to access your jewelry collection</p>
+          <p className="mt-2 text-amber-700">Your bag, orders and saved details are waiting.</p>
         </div>
 
         {/* Card */}
@@ -74,7 +74,7 @@ const Login = () => {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-amber-800 mb-1">
-                  Email Address
+                  Email address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -137,7 +137,7 @@ const Login = () => {
                 onClick={() => navigate("/forget")}
                 className="font-medium text-amber-600 hover:text-amber-800"
                 >
-                 Forgot your password?
+                 Forgotten your password?
                </button>
                 </div>
                 </div> 
@@ -152,7 +152,7 @@ const Login = () => {
                   {loading ? (
                     <span className="flex items-center">
                       <Loader className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                      Signing in...
+                      Signing in…
                     </span>
                   ) : (
                     "Sign in"
@@ -164,12 +164,12 @@ const Login = () => {
             {/* Create account link */}
             <div className="mt-8 text-center">
               <p className="text-sm text-amber-700">
-                Don't have an account?{" "}
+                New to Govind?{" "}
                 <a 
                   href="/signup" 
                   className="font-medium text-amber-600 hover:text-amber-800 underline"
                 >
-                  Create one now
+                  Create your account
                 </a>
               </p>
             </div>

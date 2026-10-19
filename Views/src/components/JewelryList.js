@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ShoppingCartIcon, PlusIcon, HeartIcon } from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
 import { getUserIdFromToken } from "../utils/auth";
 import Chat from "./Chat";
 import Footbar from "./Footbar";
 import React from 'react';
 import LocalNav from "./site/LocalNav";
-import { fetchCategories, titleCase } from "../lib/api";
+import { fetchCategories, formatPrice, titleCase } from "../lib/api";
 
 // const categories = ["All", "Rings", "Necklaces", "Earrings", "Bracelets"];
 
@@ -76,7 +75,7 @@ const JewelryList = () => {
   };
   const handleUpload = async () => {
     if (!name || !price || !selectedFile) {
-      alert("Please fill in all fields and select an image!");
+      alert("Add a name, a price and an image to continue.");
       return;
     }
 
@@ -107,7 +106,7 @@ const JewelryList = () => {
   const addToCart = async (item) => {
     
     if (!userId) {
-      alert("User is not logged in!");
+      alert("Sign in to add pieces to your bag.");
       return;
     }
 
@@ -317,8 +316,8 @@ const JewelryList = () => {
 
         {/* Collection Title */}
         <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold text-gray-800">Our Collection</h2>
-          <p className="text-gray-600 mt-2">Discover our exclusive handcrafted jewelry pieces</p>
+          <h2 className="text-4xl font-bold text-gray-800">{selectedCategory === "All" ? "Shop Jewellery." : `Shop ${titleCase(selectedCategory)}.`}</h2>
+          <p className="text-gray-600 mt-2">Every piece is designed in our studio and finished by hand.</p>
           <div className="w-24 h-1 bg-yellow-500 mx-auto mt-4"></div>
         </div>
 
@@ -420,21 +419,12 @@ const JewelryList = () => {
           </div>
 
           <div className="p-5">
-            <div className="flex items-center mb-2">
-              <div className="flex text-yellow-500">
-                <StarIcon className="w-4 h-4" />
-                <StarIcon className="w-4 h-4" />
-                <StarIcon className="w-4 h-4" />
-                <StarIcon className="w-4 h-4" />
-                <StarIcon className="w-4 h-4 text-gray-300" />
-              </div>
-              <span className="text-xs text-gray-500 ml-2">(4.0)</span>
-            </div>
+            {item.category && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand">{titleCase(item.category)}</p>}
 
             <h3 className="font-bold text-xl text-gray-800 mb-1">{item.name}</h3>
 
             <div className="flex justify-between items-center mt-3">
-              <p className="text-2xl font-bold text-yellow-600">₹{item.price}</p>
+              <p className="text-2xl font-bold text-yellow-600">{formatPrice(item.price)}</p>
 
               <button
                 onClick={(e) => {
@@ -457,8 +447,8 @@ const JewelryList = () => {
             <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <h3 className="text-xl font-medium text-gray-700">No jewelry items found</h3>
-            <p className="text-gray-500 mt-2">Start by adding your first jewelry item to the collection.</p>
+            <h3 className="text-xl font-medium text-gray-700">New designs are on their way.</h3>
+            <p className="text-gray-500 mt-2">Nothing here just yet. Explore the rest of the collection in the meantime.</p>
             <button 
               onClick={() => setShowForm(true)}
               className="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-6 rounded-lg inline-flex items-center"

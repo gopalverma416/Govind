@@ -54,6 +54,7 @@ app.use("/api/chat", require("./routes/chat"));
 app.use("/api/user-details", userDetailsRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/multiple", multiple);
+app.use("/api/rates", require("./routes/rates"));
 
 // fullCloudinaryTest();
 

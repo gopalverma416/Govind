@@ -41,12 +41,12 @@ const PaymentPage = () => {
       });
       
       if (response.status === 201) {
-        alert("Payment successful!");
+        alert("Your order has been placed.");
         navigate("/thank-you");
       }
     } catch (error) {
       console.error("Error processing payment:", error);
-      alert("Payment failed. Please try again.");
+      alert("We couldn’t complete your payment. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +57,7 @@ const PaymentPage = () => {
       <div className="max-w-3xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden">
         <div className="p-6 bg-blue-600 text-white flex items-center">
           <CreditCard className="mr-3" size={24} />
-          <h2 className="text-2xl font-bold">Payment Confirmation</h2>
+          <h2 className="text-2xl font-bold">Checkout</h2>
         </div>
 
         <div className="p-6 space-y-6">
@@ -65,7 +65,7 @@ const PaymentPage = () => {
           <div className="bg-blue-50 p-4 rounded-xl">
             <div className="flex items-center mb-4">
               <MapPin className="mr-2 text-blue-600" size={20} />
-              <h3 className="text-lg font-semibold text-blue-800">User Details</h3>
+              <h3 className="text-lg font-semibold text-blue-800">Delivery details</h3>
             </div>
             <div className="grid grid-cols-2 gap-2 text-gray-700">
               <p><strong>Name:</strong> {userDetails.firstName} {userDetails.lastName}</p>
@@ -78,7 +78,7 @@ const PaymentPage = () => {
           <div className="bg-gray-50 p-4 rounded-xl">
             <div className="flex items-center mb-4">
               <ShoppingCart className="mr-2 text-green-600" size={20} />
-              <h3 className="text-lg font-semibold text-green-800">Cart Details</h3>
+              <h3 className="text-lg font-semibold text-green-800">Your bag</h3>
             </div>
             {cart.length > 0 ? (
               <ul className="space-y-2">
@@ -90,7 +90,7 @@ const PaymentPage = () => {
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">Your cart is empty.</p>
+              <p className="text-gray-500">Your bag is empty.</p>
             )}
             <div className="mt-4 text-right font-bold text-green-800 flex justify-between items-center">
               <DollarSign className="text-green-600" size={20} />
@@ -103,7 +103,7 @@ const PaymentPage = () => {
             <label className="block mb-4">
               <span className="text-gray-700 flex items-center">
                 <CreditCard className="mr-2 text-purple-600" size={20} />
-                Select Payment Method
+                Payment method
               </span>
               <select 
                 value={paymentMethod} 
@@ -140,7 +140,7 @@ const PaymentPage = () => {
             ) : (
               <>
                 <CheckCircle className="mr-2" size={20} />
-                Confirm and Pay
+                Place order
               </>
             )}
           </button>

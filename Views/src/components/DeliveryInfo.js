@@ -47,7 +47,7 @@ const UserDetailsForm = () => {
         Phone:
         <input type="tel" name="phone" onChange={handleChange} required />
       </label>
-      <button type="submit">Proceed to Payment</button>
+      <button type="submit">Continue to payment</button>
     </form>
   );
 };

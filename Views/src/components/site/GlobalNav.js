@@ -3,8 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Gem, Search, ShoppingBag } from "lucide-react";
 import { fetchCart, fetchCategories, fetchItems, formatPrice, titleCase } from "../../lib/api";
 import { getUserIdFromToken } from "../../utils/auth";
-
-const PHONE = "+91 7247305879";
+import { BRAND } from "../../content/site";
 
 // Menu columns: the first column uses large links, the rest are small "quick links"
 const buildMenus = (categories, items) => {
@@ -12,9 +11,9 @@ const buildMenus = (categories, items) => {
   const helpColumn = {
     title: "More from Govind",
     links: [
-      { label: "Custom designs", to: "/chat" },
+      { label: "Bespoke design", to: "/chat" },
       { label: "Sketchbook", to: "/#sketchbook" },
-      { label: "Chat with an expert", to: "/chat" },
+      { label: "Talk to a designer", to: "/chat" },
     ],
   };
 
@@ -64,7 +63,7 @@ const buildMenus = (categories, items) => {
           title: "Sketchbook",
           large: true,
           links: [
-            { label: "Explore the sketchbook", to: "/#sketchbook" },
+            { label: "Explore the Sketchbook", to: "/#sketchbook" },
             { label: "Commission a design", to: "/chat" },
           ],
         },
@@ -77,15 +76,15 @@ const buildMenus = (categories, items) => {
       to: "/chat",
       columns: [
         {
-          title: "Get help",
+          title: "Customer Care",
           large: true,
           links: [
-            { label: "Chat with us", to: "/chat" },
-            { label: "Your account", to: "/account" },
+            { label: "Talk to a designer", to: "/chat" },
+            { label: "Manage your account", to: "/account" },
             { label: "Reset password", to: "/forget" },
           ],
         },
-        { title: "Call us", links: [{ label: PHONE, href: `tel:${PHONE.replace(/\s/g, "")}` }] },
+        { title: "Call us", links: [{ label: BRAND.phone, href: BRAND.phoneHref }] },
       ],
     },
   ];
@@ -309,7 +308,7 @@ const GlobalNav = () => {
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search govind.in"
+                  placeholder="Search Govind Jewellers"
                   aria-label="Search products"
                   className="w-full bg-transparent text-[24px] font-semibold text-ink placeholder:text-muted/70 focus:outline-none"
                 />
@@ -317,7 +316,7 @@ const GlobalNav = () => {
               <div className="mt-8">
                 <h2 className="mb-3 text-[12px] text-muted">{query ? "Products" : "Quick links"}</h2>
                 <ul>
-                  {query && results.length === 0 && <li className="text-[14px] text-muted">No matches. Try “ring” or “gold”.</li>}
+                  {query && results.length === 0 && <li className="text-[14px] text-muted">No results. Try “ring” or “necklace”.</li>}
                   {(query ? results : []).map((item) => (
                     <li key={item._id}>
                       <Link to={`/product/${item._id}`} className="flex items-center gap-3 py-2 text-[14px] font-semibold text-ink hover:text-brand">
@@ -328,7 +327,7 @@ const GlobalNav = () => {
                     </li>
                   ))}
                   {!query &&
-                    [{ label: "Shop all jewellery", to: "/list" }, ...categories.map((c) => ({ label: titleCase(c), to: `/list?category=${encodeURIComponent(c)}` })), { label: "Chat with an expert", to: "/chat" }].map((link) => (
+                    [{ label: "Shop all jewellery", to: "/list" }, ...categories.map((c) => ({ label: titleCase(c), to: `/list?category=${encodeURIComponent(c)}` })), { label: "Talk to a designer", to: "/chat" }].map((link) => (
                       <li key={link.label}>
                         <Link to={link.to} className="flex items-center gap-2 py-1.5 text-[14px] font-semibold text-ink/80 hover:text-brand">
                           <span aria-hidden="true">→</span> {link.label}
@@ -347,7 +346,7 @@ const GlobalNav = () => {
             <div className="mx-auto max-w-content animate-fade-down px-6 pb-16 pt-8 md:px-[22px] md:pt-10">
               <h2 className="text-[24px] font-semibold text-ink">{cartCount > 0 ? "Your bag" : "Your bag is empty."}</h2>
               <p className="mt-2 text-[12px] text-muted">
-                {cartCount > 0 ? `You have ${cartCount} ${cartCount === 1 ? "item" : "items"} in your bag.` : isAuthenticated ? "Find something you love in the store." : "Sign in to see if you have any saved items."}
+                {cartCount > 0 ? `You have ${cartCount} ${cartCount === 1 ? "item" : "items"} in your bag.` : isAuthenticated ? "Find something you love in the Store." : "Sign in to see if you have any saved items."}
               </p>
               {cartCount > 0 ? (
                 <Link to="/purchase" className="btn-filled mt-6 px-8 text-[14px]">Review bag</Link>

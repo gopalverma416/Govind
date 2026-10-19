@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { fetchCategories, titleCase } from '../lib/api';
-
-const PHONE = '+91 7247305879';
+import { BRAND } from '../content/site';
+import MetalRates from './site/MetalRates';
 
 // Apple-style global footer: footnotes, a link directory that collapses into
 // accordions on small screens, and a legal row.
@@ -17,9 +17,9 @@ const Footer = () => {
 
   const directory = [
     {
-      title: 'Shop',
+      title: 'Shop and Learn',
       links: [
-        { label: 'All jewellery', to: '/list' },
+        { label: 'All Jewellery', to: '/list' },
         ...categories.map((c) => ({ label: titleCase(c), to: `/list?category=${encodeURIComponent(c)}` })),
       ],
     },
@@ -37,14 +37,14 @@ const Footer = () => {
       title: 'Bespoke',
       links: [
         { label: 'Sketchbook', to: '/#sketchbook' },
-        { label: 'Commission a design', to: '/chat' },
+        { label: 'Commission a piece', to: '/chat' },
       ],
     },
     {
-      title: 'Help',
+      title: 'Customer Care',
       links: [
-        { label: 'Chat with us', to: '/chat' },
-        { label: `Call ${PHONE}`, href: `tel:${PHONE.replace(/\s/g, '')}` },
+        { label: 'Talk to a designer', to: '/chat' },
+        { label: `Call ${BRAND.phone}`, href: BRAND.phoneHref },
         { label: 'Delivery details', to: '/user-details' },
       ],
     },
@@ -56,8 +56,10 @@ const Footer = () => {
     <footer className="bg-mist text-[12px] text-muted">
       <div className="mx-auto max-w-content px-4 md:px-[22px]">
         <div className="border-b border-black/10 py-4 leading-[1.33]">
-          <p>Product images are representative. Final weight and price can vary with the day's gold rate and the finished piece.</p>
+          <p>Product images are for illustration. As every piece is finished by hand, final weight and price may vary slightly with the day’s gold rate.</p>
         </div>
+
+        <MetalRates variant="footer" />
 
         <nav aria-label="Footer" className="border-b border-black/10 py-2 md:grid md:grid-cols-4 md:gap-5 md:py-5">
           {directory.map((column) => {
@@ -92,8 +94,8 @@ const Footer = () => {
         </nav>
 
         <p className="pt-4">
-          More ways to shop: <Link to="/chat" className="text-brand hover:underline">chat with our designers</Link> or call{' '}
-          <a href={`tel:${PHONE.replace(/\s/g, '')}`} className="text-brand hover:underline">{PHONE}</a>.
+          More ways to shop: <Link to="/chat" className="text-brand hover:underline">talk to a designer</Link> online or call{' '}
+          <a href={BRAND.phoneHref} className="text-brand hover:underline">{BRAND.phone}</a>.
         </p>
 
         <div className="flex flex-col gap-2 py-4 md:flex-row md:items-center md:justify-between">
