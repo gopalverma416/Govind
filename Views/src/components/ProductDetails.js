@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { 
   ShoppingCartIcon, 
-  HeartIcon, 
   TruckIcon, 
   ShieldCheckIcon, 
   GiftIcon,
@@ -16,7 +15,12 @@ import {
 
 import { getUserIdFromToken } from "../utils/auth";
 import { formatPrice, titleCase } from "../lib/api";
-import { PRODUCT_HIGHLIGHTS, PROMISES } from "../content/site";
+import { BRAND, PRODUCT_HIGHLIGHTS, PROMISES } from "../content/site";
+import { recentlyViewed } from "../lib/savedList";
+import WishlistButton from "./site/WishlistButton";
+import RecentlyViewed from "./site/RecentlyViewed";
+import PageMeta from "./site/PageMeta";
+import { whatsappLink } from "./site/WhatsAppButton";
 import { useNavigate } from "react-router-dom";
 
 const ProductDetails = () => {
@@ -50,6 +54,11 @@ const ProductDetails = () => {
       .then((response) => setItem(response.data))
       .catch((error) => console.error("Error fetching product details:", error));
   }, [id]);
+
+  // Remember this piece for the "Recently viewed" rows
+  useEffect(() => {
+    if (item?._id) recentlyViewed.add(item);
+  }, [item]);
 
   if (!item) return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
@@ -88,6 +97,28 @@ const ProductDetails = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-4 sm:px-6 lg:px-8">
+      <PageMeta
+        title={item.name}
+        description={item.description || `${item.name}${item.category ? `, ${titleCase(item.category)}` : ""}, handcrafted by Govind Jewellers. ${formatPrice(item.price)}.`}
+        image={item.images?.[0]}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: item.name,
+          image: item.images,
+          description: item.description || undefined,
+          category: item.category || undefined,
+          sku: item._id,
+          brand: { "@type": "Brand", name: BRAND.name },
+          ...(item.weight ? { weight: { "@type": "QuantitativeValue", value: item.weight, unitCode: "GRM" } } : {}),
+          offers: {
+            "@type": "Offer",
+            url: `${BRAND.siteUrl}/product/${item._id}`,
+            priceCurrency: "INR",
+            price: item.price,
+          },
+        }}
+      />
       <div className="max-w-6xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-2 gap-12 p-12 relative">
         {/* Decorative Elements */}
         <div className="absolute top-6 right-6 flex space-x-4">
@@ -173,9 +204,7 @@ const ProductDetails = () => {
     </div>
   </div>
 )}
-          <button className="bg-white/70 p-3 rounded-full shadow-md hover:bg-white transition group">
-            <HeartIcon className="h-6 w-6 text-gray-700 group-hover:text-red-500 transition" />
-          </button>
+          <WishlistButton item={item} size={22} className="h-12 w-12" />
         </div>
 
         {/* Product Image Gallery */}
@@ -344,6 +373,15 @@ const ProductDetails = () => {
             </button>
           </div>
 
+          <a
+            href={whatsappLink(`Hi ${BRAND.name}, I'm interested in the ${item.name} (${formatPrice(item.price)}): ${BRAND.siteUrl}/product/${item._id}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#25D366] py-3 text-[17px] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/10"
+          >
+            Ask about this piece on WhatsApp
+          </a>
+
           {/* Product Details */}
           <div className="border-t-2 border-gray-200 pt-8">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 
@@ -363,6 +401,7 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+      <RecentlyViewed excludeId={item._id} title="You recently viewed." className="mx-auto max-w-6xl" />
     </div>
   );
 };

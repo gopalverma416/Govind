@@ -20,6 +20,7 @@ const Footer = () => {
       title: 'Shop and Learn',
       links: [
         { label: 'All Jewellery', to: '/list' },
+        { label: 'Gold Rate Today', to: '/gold-rate' },
         ...categories.map((c) => ({ label: titleCase(c), to: `/list?category=${encodeURIComponent(c)}` })),
       ],
     },
@@ -28,6 +29,7 @@ const Footer = () => {
       links: [
         { label: 'Manage your account', to: '/account' },
         { label: 'Your bag', to: '/purchase' },
+        { label: 'Your wishlist', to: '/wishlist' },
         { label: 'Sign in', to: '/login' },
         { label: 'Create account', to: '/signup' },
         { label: 'Reset password', to: '/forget' },

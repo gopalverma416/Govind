@@ -20,6 +20,9 @@ import { useLocation } from 'react-router-dom';
 import { useEffect } from "react";
 import ProductDetails from "./components/ProductDetails";
 import UploadForm from './components/UploadForm';
+import WishlistPage from './components/WishlistPage';
+import GoldRatePage from './components/GoldRatePage';
+import WhatsAppButton from './components/site/WhatsAppButton';
 
 
 
@@ -63,6 +66,8 @@ const App = () => {
         <Route path="/thank-you" element={<Thankyou/>} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/upload-form" element={<UploadForm/>} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/gold-rate" element={<GoldRatePage />} />
         
 
 
@@ -70,6 +75,7 @@ const App = () => {
         
 
       </Routes>
+      <WhatsAppButton />
     </BrowserRouter>
   );
 };

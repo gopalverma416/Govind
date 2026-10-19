@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Info } from "lucide-react";
 import { fetchMetalRates, formatPrice } from "../../lib/api";
 
 const REFRESH_MS = 5 * 60 * 1000;
 
-const formatTime = (iso) =>
+export const formatTime = (iso) =>
   new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
-const disclaimerFor = (rates) =>
+export const disclaimerFor = (rates) =>
   rates.basis === "spot"
     ? "Indicative international spot price converted to rupees. Excludes import duty, GST and making charges, so store prices will be higher."
     : `Spot price plus ${rates.premiumPercent}% to reflect duties and taxes. Excludes making charges. Indicative only.`;
 
 // Live gold and silver rates in INR. Refreshes every five minutes while the tab is visible.
-const useMetalRates = () => {
+export const useMetalRates = () => {
   const [rates, setRates] = useState(null);
 
   useEffect(() => {
@@ -66,7 +67,8 @@ const MetalRates = ({ variant = "strip" }) => {
           ))}
         </p>
         <p className="mt-1">
-          {disclaimer} Updated {formatTime(rates.updatedAt)} IST.
+          {disclaimer} Updated {formatTime(rates.updatedAt)} IST.{" "}
+          <Link to="/gold-rate" className="text-brand hover:underline">Gold rate calculator</Link>
         </p>
       </div>
     );
@@ -100,6 +102,9 @@ const MetalRates = ({ variant = "strip" }) => {
             {disclaimer}
           </span>
         </span>
+        <Link to="/gold-rate" className="whitespace-nowrap text-brand hover:underline">
+          Gold rate calculator<span aria-hidden="true"> ›</span>
+        </Link>
       </div>
     </section>
   );

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Gem, Search, ShoppingBag } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gem, Heart, Search, ShoppingBag } from "lucide-react";
 import { fetchCart, fetchCategories, fetchItems, formatPrice, titleCase } from "../../lib/api";
 import { getUserIdFromToken } from "../../utils/auth";
 import { BRAND } from "../../content/site";
+import { useWishlist } from "../../lib/savedList";
 
 // Menu columns: the first column uses large links, the rest are small "quick links"
 const buildMenus = (categories, items) => {
@@ -29,7 +30,8 @@ const buildMenus = (categories, items) => {
           links: [
             { label: "Your bag", to: "/purchase" },
             { label: "Your account", to: "/account" },
-            { label: "Delivery details", to: "/user-details" },
+            { label: "Your wishlist", to: "/wishlist" },
+            { label: "Gold rate today", to: "/gold-rate" },
           ],
         },
         helpColumn,
@@ -142,6 +144,7 @@ const GlobalNav = () => {
   const hoverTimer = useRef(null);
   const searchInput = useRef(null);
   const isAuthenticated = Boolean(localStorage.getItem("token"));
+  const { items: savedItems } = useWishlist();
 
   useEffect(() => {
     fetchCategories().then((data) => setCategories(Array.isArray(data) ? data.filter(Boolean) : []));
@@ -261,6 +264,14 @@ const GlobalNav = () => {
             <button type="button" aria-label="Search" aria-expanded={openMenu === "search"} onClick={() => toggle("search")} className={iconButton}>
               <Search size={16} />
             </button>
+            <Link to="/wishlist" aria-label={`Wishlist, ${savedItems.length} items`} className={`${iconButton} relative`}>
+              <Heart size={16} />
+              {savedItems.length > 0 && (
+                <span className="absolute bottom-[11px] right-[6px] flex h-[13px] min-w-[13px] items-center justify-center rounded-full bg-rose-500 px-[3px] text-[9px] font-semibold text-white">
+                  {savedItems.length}
+                </span>
+              )}
+            </Link>
             <button type="button" aria-label={`Bag, ${cartCount} items`} aria-expanded={openMenu === "bag"} onClick={() => toggle("bag")} className={`${iconButton} relative`}>
               <ShoppingBag size={16} />
               {cartCount > 0 && (
@@ -358,6 +369,7 @@ const GlobalNav = () => {
               <h3 className="mb-2 mt-10 text-[12px] text-muted">My profile</h3>
               <ul className="space-y-1 text-[14px] font-semibold text-ink/80">
                 <li><Link to="/purchase" className="hover:text-brand">Bag</Link></li>
+                <li><Link to="/wishlist" className="hover:text-brand">Wishlist</Link></li>
                 <li><Link to="/account" className="hover:text-brand">Account</Link></li>
                 {isAuthenticated ? (
                   <li><button type="button" onClick={handleLogout} className="hover:text-brand">Sign out</button></li>

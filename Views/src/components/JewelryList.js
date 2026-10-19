@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ShoppingCartIcon, PlusIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { ShoppingCartIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { getUserIdFromToken } from "../utils/auth";
 import Chat from "./Chat";
 import Footbar from "./Footbar";
 import React from 'react';
 import LocalNav from "./site/LocalNav";
+import WishlistButton from "./site/WishlistButton";
+import PageMeta from "./site/PageMeta";
 import { fetchCategories, formatPrice, titleCase } from "../lib/api";
 
 // const categories = ["All", "Rings", "Necklaces", "Earrings", "Bracelets"];
@@ -187,6 +189,10 @@ const JewelryList = () => {
           </div>
         </div>
       </header> */}
+      <PageMeta
+        title={selectedCategory === "All" ? "Shop Jewellery" : `Shop ${titleCase(selectedCategory)}`}
+        description={`Shop handcrafted ${selectedCategory === "All" ? "jewellery" : selectedCategory} from Govind Jewellers.`}
+      />
       <LocalNav
         title={selectedCategory === "All" ? "Jewellery" : titleCase(selectedCategory)}
         items={categories.map((category) => ({ key: category, label: category === "All" ? "All" : titleCase(category) }))}
@@ -399,9 +405,7 @@ const JewelryList = () => {
               className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-110"
             />
             <div className="absolute top-4 right-4">
-              <button className="p-2 bg-white rounded-full shadow-md text-gray-700 hover:text-red-500 transition-colors">
-                <HeartIcon className="w-5 h-5" />
-              </button>
+              <WishlistButton item={item} size={18} className="h-9 w-9" />
             </div>
             {hoveredItem === item._id && (
               <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">

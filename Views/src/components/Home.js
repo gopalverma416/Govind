@@ -6,6 +6,8 @@ import HeroUnit from './site/HeroUnit';
 import PromoTile from './site/PromoTile';
 import MediaGallery from './site/MediaGallery';
 import MetalRates from './site/MetalRates';
+import RecentlyViewed from './site/RecentlyViewed';
+import PageMeta from './site/PageMeta';
 import { fetchItems, fetchSketches, fetchSlides, formatPrice, titleCase } from '../lib/api';
 import { CATEGORY_COPY, DEFAULT_CATEGORY_COPY } from '../content/site';
 
@@ -86,6 +88,7 @@ const Home = () => {
 
   return (
     <main className="bg-white pt-12">
+      <PageMeta description="Fine jewellery from Govind Jewellers, drawn by hand and made to last for generations. Shop rings, necklaces, earrings and bracelets." />
       <Ribbon linkText="Talk to a designer" to="/chat">
         Every Govind piece begins as a hand-drawn sketch. Commission one of your own.
       </Ribbon>
@@ -124,6 +127,8 @@ const Home = () => {
           ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-[490px] animate-pulse bg-mist md:h-[580px]" />)
           : tiles.map((tile, i) => <PromoTile key={tile.key} {...tile} theme={themeFor(i)} delay={(i % 2) * 120} />)}
       </section>
+
+      <RecentlyViewed />
 
       <MediaGallery
         id="sketchbook"

@@ -7,6 +7,9 @@ export const BRAND = {
   shortName: "Govind",
   phone: "+91 7247305879",
   phoneHref: "tel:+917247305879",
+  // WhatsApp number in international format, digits only
+  whatsapp: "917247305879",
+  siteUrl: "https://govind-ochre.vercel.app",
 };
 
 export const PROMISES = {
