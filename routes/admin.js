@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const User = require("../models/userModel");
 const  adminMiddleware =require('../middleware/adminMiddleware');
+const requireAdmin = require('../middleware/requireAdmin');
 const mongoose = require("mongoose");
 const { upload, uploadToCloudinary } = require("../cloudinaryConfig");
 const Slideshow =require('../models/Slideshow');
@@ -12,10 +13,7 @@ const Payment=require('../models/payment');
 const Cart= require('../models/cartModel');
 
 
-router.get("/", authMiddleware, async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ msg: "Access denied" });
-  }
+router.get("/", requireAdmin, async (req, res) => {
 
   try {
     const messages = await Chat.find().populate("userId", "name email"); // Get messages with user info
@@ -26,7 +24,7 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 
-router.get("/payment",  async (req, res) => {
+router.get("/payment", requireAdmin, async (req, res) => {
   try {
     const payments = await Payment.find().populate("userId", "firstName lastName phone street district pincode");
     const carts = await Cart.find().populate("userId", "firstName lastName phone").populate("items.itemId");
@@ -46,7 +44,7 @@ router.get("/payment",  async (req, res) => {
     res.status(500).json({ message: "Failed to fetch details" });
   }
 });
-router.get("/orders-stats", async (req, res) => {
+router.get("/orders-stats", requireAdmin, async (req, res) => {
   try {
     const totalOrders = await Payment.countDocuments();
     const totalSales = await Payment.aggregate([
@@ -97,7 +95,7 @@ router.post("/upload", authMiddleware,adminMiddleware,upload.single("image") , a
        
   
 });
-router.put("/make-admin/:id", async (req, res) => {
+router.put("/make-admin/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
   

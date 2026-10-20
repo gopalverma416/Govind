@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/userModel');
 const authMiddleware =require('../middleware/authMiddleware');
+const requireAdmin = require('../middleware/requireAdmin');
 
 
 // CRUD Operations
 
 // READ (View Users)
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
     try {
         const users = await User.find({}, "-password");
         res.status(200).json(users);
@@ -21,7 +22,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 
 // CREATE (Add New User)
-router.post('/users', async (req, res) => {
+router.post('/users', requireAdmin, async (req, res) => {
     try {
         const { name, age, weight } = req.body;  
 
@@ -46,7 +47,7 @@ router.post('/users', async (req, res) => {
 });
 
 // UPDATE (Modify User)
-router.put('/users/:id', async (req, res) => {
+router.put('/users/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { name, age, weight } = req.body;
 
@@ -74,7 +75,7 @@ router.put('/users/:id', async (req, res) => {
 
 //delete
 
-router.delete('/users/:id',async(req,res)=>{
+router.delete('/users/:id', requireAdmin, async(req,res)=>{
     const {id}=req.params;
     try{
         const deletedUser=await User.findByIdAndDelete(id);

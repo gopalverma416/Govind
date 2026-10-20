@@ -1,62 +1,71 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { CheckCircle, Home } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import { BRAND, PROMISES } from '../content/site';
+import { formatPrice } from '../lib/api';
+import { Card } from './site/ui';
+import PageMeta from './site/PageMeta';
+import { whatsappLink } from './site/WhatsAppButton';
 
 const ThankYouPage = () => {
+  const { state } = useLocation();
+  const orderId = state?.orderId;
+  // A short, readable reference derived from the order's database id
+  const reference = orderId ? `GJ-${String(orderId).slice(-8).toUpperCase()}` : null;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gold-100 to-gold-50 flex items-center justify-center px-4 py-16">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl border border-gold-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-gold-500 to-gold-600 p-8 text-center">
-          <CheckCircle 
-            className="mx-auto mb-4 text-white" 
-            size={80} 
-            strokeWidth={1.5}
-          />
-          <h1 className="text-3xl font-bold text-white">
-            Thank you for your order.
-          </h1>
-        </div>
-        
-        <div className="p-8 text-center">
-          <p className="text-lg text-gray-700 mb-6">
-            Your order is confirmed. We’re preparing your pieces with care and will be in touch when they’re on their way.
-          </p>
-          
-          <div className="bg-gold-50 p-4 rounded-lg mb-6 border border-gold-200">
-            <h2 className="text-xl font-semibold text-gold-800 mb-2">
-              What happens next
-            </h2>
-            <p className="text-gold-700">
-              Estimated delivery: {PROMISES.deliveryEstimate}
-            </p>
-          </div>
-          
-          <Link 
-            to="/" 
-            className="w-full flex items-center justify-center bg-gold-500 text-white py-3 rounded-lg hover:bg-gold-600 transition-colors duration-300 ease-in-out group"
+    <main className="min-h-screen bg-mist px-4 pb-16 pt-24 md:pt-28">
+      <PageMeta title="Order Confirmed" />
+      <div className="mx-auto max-w-[560px] text-center">
+        <CheckCircle2 size={56} strokeWidth={1.5} className="mx-auto text-emerald-500" />
+        <h1 className="mt-5 text-[32px] font-semibold leading-[1.125] text-ink md:text-[40px]">Thank you for your order.</h1>
+        <p className="mt-3 text-[17px] text-muted">
+          We’re preparing your pieces with care. Our team will call you shortly to confirm your order and payment.
+        </p>
+
+        <Card className="mt-8 text-left">
+          <dl className="space-y-3 text-[17px]">
+            {reference && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Order reference</dt>
+                <dd className="font-semibold tabular-nums text-ink">{reference}</dd>
+              </div>
+            )}
+            {typeof state?.total === 'number' && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Total</dt>
+                <dd className="tabular-nums text-ink">{formatPrice(state.total)}</dd>
+              </div>
+            )}
+            {state?.paymentMethod && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Payment</dt>
+                <dd className="text-ink">{state.paymentMethod}</dd>
+              </div>
+            )}
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Estimated delivery</dt>
+              <dd className="text-ink">{PROMISES.deliveryEstimate}</dd>
+            </div>
+          </dl>
+        </Card>
+
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link to="/list" className="btn-filled">Continue shopping</Link>
+          <a
+            href={whatsappLink(`Hi ${BRAND.name}, I have a question about my order${reference ? ` ${reference}` : ''}.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-outline"
           >
-            <Home 
-              className="mr-3 group-hover:animate-bounce" 
-              size={24} 
-            />
-            Continue shopping
-          </Link>
+            Ask about your order
+          </a>
         </div>
-        
-        <div className="bg-gold-100 p-4 text-center text-gold-700">
-          <p className="text-sm">
-            Questions about your order? Call us on
-            <a 
-              href={BRAND.phoneHref} 
-              className="font-bold ml-1 hover:text-gold-800"
-            >
-              {BRAND.phone}
-            </a>
-          </p>
-        </div>
+        <p className="mt-8 text-[14px] text-muted">
+          Questions? Call us on <a href={BRAND.phoneHref} className="text-brand hover:underline">{BRAND.phone}</a>.
+        </p>
       </div>
-    </div>
+    </main>
   );
 };
 

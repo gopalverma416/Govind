@@ -1,148 +1,113 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ChevronRight, Heart, MessageCircle, ShoppingBag } from "lucide-react";
 import { getUserIdFromToken } from "../utils/auth";
-import { User, Mail, Calendar, MapPin, LogOut, Scale, Award, Edit } from "lucide-react";
+import { API_BASE } from "../lib/api";
+import { useWishlist } from "../lib/savedList";
+import { Card, Spinner } from "./site/ui";
+import PageMeta from "./site/PageMeta";
+import Footbar from "./Footbar";
 
+const Row = ({ label, value }) => (
+  <div className="flex flex-col gap-0.5 border-b border-black/10 py-3.5 last:border-b-0 sm:flex-row sm:justify-between sm:gap-6">
+    <dt className="text-[14px] text-muted">{label}</dt>
+    <dd className="text-[17px] text-ink sm:text-right">{value || "—"}</dd>
+  </div>
+);
 
 const Account = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const userId = getUserIdFromToken();
+  const { items: saved } = useWishlist();
 
   useEffect(() => {
     if (!userId) {
-      alert("Sign in to see your account.");
-      navigate("/login");
+      navigate("/login", { replace: true, state: { from: location } });
       return;
     }
-
     axios
-      .get(`https://govind-jwellers.onrender.com/api/users/${userId}`)
-      .then((response) => {
-        console.log("User Data:", response.data);
-        setUser(response.data.user);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching user details:", error);
-        setLoading(false);
-      });
-  }, [userId, navigate]);
+      .get(`${API_BASE}/api/users/${userId}`)
+      .then((response) => setUser(response.data.user))
+      .catch((error) => console.error("Error fetching user details:", error))
+      .finally(() => setLoading(false));
+  }, [userId, navigate, location]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-amber-50">
-        <div className="animate-pulse flex flex-col items-center p-8 rounded-lg">
-          <div className="h-20 w-20 bg-amber-200 rounded-full mb-4"></div>
-          <div className="h-6 w-40 bg-amber-200 rounded mb-6"></div>
-          <div className="space-y-3 w-full max-w-md">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-amber-200 rounded w-full"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const shortcuts = [
+    { to: "/purchase", icon: ShoppingBag, title: "Bag", detail: "Review your pieces and check out." },
+    { to: "/wishlist", icon: Heart, title: "Wishlist", detail: saved.length ? `${saved.length} saved ${saved.length === 1 ? "piece" : "pieces"}.` : "Pieces you’ve saved for later." },
+    { to: "/chat", icon: MessageCircle, title: "Talk to a designer", detail: "Questions, sizing or a bespoke idea." },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 py-12 px-4 sm:px-6">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-lg transform transition duration-300 hover:shadow-xl">
-        <div className="w-full">
-          <div className="bg-gradient-to-r from-yellow-500 to-amber-600 p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                <Award size={24} /> Govind Account
-              </h2>
-              <button
-                onClick={() => navigate("/edit-profile")}
-                className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition"
-              >
-                <Edit size={18} className="text-white" />
-              </button>
-            </div>
-            {user && (
-              <div className="mt-6 text-center">
-                <div className="inline-block h-24 w-24 rounded-full ring-4 ring-white bg-amber-100 flex items-center justify-center">
-                  <User size={40} className="text-amber-600" />
-                </div>
-                <h3 className="mt-4 text-xl font-semibold text-white">{user.name}</h3>
+    <main className="min-h-screen bg-mist pt-12">
+      <PageMeta title="Your Account" />
+      <div className="mx-auto max-w-content px-6 pb-16 pt-12 md:px-[22px] md:pt-16">
+        {loading ? (
+          <Spinner />
+        ) : (
+          <>
+            <p className="text-[17px] font-semibold text-brand">Govind Account</p>
+            <h1 className="headline-tile mt-1">{user ? `Hi, ${user.name.split(" ")[0]}.` : "Your account."}</h1>
+
+            <ul className="mt-8 grid gap-3 md:grid-cols-3">
+              {shortcuts.map(({ to, icon: Icon, title, detail }) => (
+                <li key={to}>
+                  <Link to={to} className="group flex h-full items-center gap-4 rounded-[18px] bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_8px_28px_rgba(0,0,0,0.1)]">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mist text-brand">
+                      <Icon size={20} />
+                    </span>
+                    <span className="flex-1">
+                      <span className="block text-[17px] font-semibold text-ink">{title}</span>
+                      <span className="block text-[14px] text-muted">{detail}</span>
+                    </span>
+                    <ChevronRight size={18} className="text-muted transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {user ? (
+              <div className="mt-6 grid gap-6 md:grid-cols-2">
+                <Card>
+                  <h2 className="text-[21px] font-semibold text-ink">Personal information</h2>
+                  <dl className="mt-3">
+                    <Row label="Name" value={user.name} />
+                    <Row label="Email" value={user.email} />
+                    <Row label="Age" value={user.age ? `${user.age}` : null} />
+                    <Row label="Gender" value={user.gender} />
+                  </dl>
+                </Card>
+                <Card>
+                  <h2 className="text-[21px] font-semibold text-ink">Delivery address</h2>
+                  <p className="mt-4 whitespace-pre-line text-[17px] text-ink">{user.address || "No address saved yet."}</p>
+                  <p className="mt-6 text-[14px] text-muted">
+                    Need to change your details? <Link to="/chat" className="text-brand hover:underline">Talk to us</Link> and we’ll update them for you.
+                  </p>
+                </Card>
               </div>
+            ) : (
+              <Card className="mt-6">
+                <p className="text-[17px] text-muted">We couldn’t load your details right now. Please try again in a moment.</p>
+              </Card>
             )}
-          </div>
 
-          {user && (
-            <div className="p-6">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="p-3 bg-amber-50 rounded-lg flex items-center gap-3 border border-amber-200">
-                  <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-2 rounded-full">
-                    <Mail size={18} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">Email</p>
-                    <p className="text-sm text-gray-800 font-medium">{user.email}</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-lg flex items-center gap-3 border border-amber-200">
-                  <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-2 rounded-full">
-                    <Calendar size={18} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">Age</p>
-                    <p className="text-sm text-gray-800 font-medium">{user.age} years</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-lg flex items-center gap-3 border border-amber-200">
-                  <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-2 rounded-full">
-                    <Scale size={18} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">Weight</p>
-                    <p className="text-sm text-gray-800 font-medium">{user.weight} kg</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-lg flex items-center gap-3 border border-amber-200">
-                  <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-2 rounded-full">
-                    <User size={18} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">Gender</p>
-                    <p className="text-sm text-gray-800 font-medium">{user.gender}</p>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-lg flex items-center gap-3 border border-amber-200">
-                  <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-2 rounded-full">
-                    <MapPin size={18} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">Address</p>
-                    <p className="text-sm text-gray-800 font-medium">{user.address}</p>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="mt-8 w-full py-3 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-semibold flex items-center justify-center gap-2 hover:from-amber-600 hover:to-yellow-700 transition shadow-md"
-              >
-                <LogOut size={18} /> Sign out
-              </button>
-            </div>
-          )}
-        </div>
+            <button type="button" onClick={handleLogout} className="mt-8 text-[17px] text-brand hover:underline">
+              Sign out
+            </button>
+          </>
+        )}
       </div>
-    </div>
+      <Footbar />
+    </main>
   );
 };
 

@@ -1,8 +1,19 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { User, Mail, Lock, Calendar, Weight, MapPin, Loader } from "lucide-react";
-import Signup1 from "./Sign1";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { API_BASE } from "../lib/api";
+import { Alert, AuthShell, Button, Divider, Field, Input, Select } from "./site/ui";
+import GoogleButton from "./site/GoogleButton";
+import PageMeta from "./site/PageMeta";
+
+const MIN_PASSWORD = 8;
+
+const Section = ({ title, children }) => (
+  <fieldset className="space-y-4">
+    <legend className="mb-3 text-[17px] font-semibold text-ink">{title}</legend>
+    {children}
+  </fieldset>
+);
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -14,240 +25,126 @@ const Signup = () => {
     gender: "",
     address: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const destination = location.state?.from?.pathname || "/account";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const signedUp = (token) => {
+    localStorage.setItem("token", token);
+    navigate(destination, { replace: true });
+  };
+
+  const profileComplete = formData.age && formData.weight && formData.gender && formData.address.trim();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
-
+    if (formData.password.length < MIN_PASSWORD) {
+      setError(`Choose a password with at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await axios.post("https://govind-jwellers.onrender.com/api/auth/signup", formData);
-      localStorage.setItem("token", res.data.token);
-      navigate("/users"); // Redirect to users page after signup
+      const res = await axios.post(`${API_BASE}/api/auth/signup`, formData);
+      signedUp(res.data.token);
     } catch (err) {
-      setError(err.response?.data?.msg || "Signup failed. Try again.");
+      const msg = err.response?.data?.msg;
+      setError(
+        msg === "User already exists" ? (
+          <>
+            There’s already a Govind Account for this email. <Link to="/login" className="font-semibold underline">Sign in</Link> instead.
+          </>
+        ) : (
+          msg || "We couldn’t create your account. Please try again."
+        )
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogle = async (credential) => {
+    setError(null);
+    if (!profileComplete) {
+      setError("Fill in “About you” and your delivery address first, then continue with Google.");
+      return;
+    }
+    try {
+      const { age, gender, address, weight } = formData;
+      const res = await axios.post(`${API_BASE}/api/auth/google-signup`, { token: credential, age, gender, address, weight });
+      signedUp(res.data.token);
+    } catch (err) {
+      setError(err.response?.data?.msg || "We couldn’t create your account with Google. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 pt-20 to-yellow-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8">
-        {/* Logo/Header */}
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg">
-            <User className="h-8 w-8 text-white" />
+    <AuthShell
+      title="Create your Govind Account."
+      subtitle="One account for your bag, your orders and your bespoke designs."
+      footer={
+        <>
+          Already have a Govind Account?{" "}
+          <Link to="/login" className="text-brand hover:underline">Sign in<span aria-hidden="true"> ›</span></Link>
+        </>
+      }
+    >
+      <PageMeta title="Create Account" />
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <Alert>{error}</Alert>
+
+        <Section title="Your account">
+          <Field label="Full name" htmlFor="name">
+            <Input id="name" name="name" autoComplete="name" required maxLength={50} value={formData.name} onChange={handleChange} />
+          </Field>
+          <Field label="Email address" htmlFor="email">
+            <Input id="email" name="email" type="email" autoComplete="email" required value={formData.email} onChange={handleChange} placeholder="name@example.com" />
+          </Field>
+          <Field label="Password" htmlFor="password" hint={`At least ${MIN_PASSWORD} characters.`}>
+            <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD} value={formData.password} onChange={handleChange} />
+          </Field>
+        </Section>
+
+        <Section title="About you">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Age" htmlFor="age">
+              <Input id="age" name="age" type="number" inputMode="numeric" min="1" max="120" required value={formData.age} onChange={handleChange} />
+            </Field>
+            <Field label="Weight (kg)" htmlFor="weight">
+              <Input id="weight" name="weight" type="number" inputMode="decimal" min="1" required value={formData.weight} onChange={handleChange} />
+            </Field>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-amber-900">Create your Govind Account.</h2>
-          <p className="mt-2 text-sm text-amber-700">
-            One account for your bag, your orders and your bespoke designs.
-          </p>
-        </div>
+          <Field label="Gender" htmlFor="gender">
+            <Select id="gender" name="gender" required value={formData.gender} onChange={handleChange}>
+              <option value="" disabled>Select</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </Select>
+          </Field>
+        </Section>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6 bg-white p-8 rounded-2xl shadow-lg border border-amber-200">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+        <Section title="Delivery address">
+          <Field label="Address" htmlFor="address">
+            <Input id="address" name="address" autoComplete="street-address" required value={formData.address} onChange={handleChange} placeholder="House no., street, city, pincode" />
+          </Field>
+        </Section>
 
-          <div className="space-y-4">
-            {/* Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-amber-800">
-                Full name
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-amber-500" />
-                </div>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="Full name"
-                  onChange={handleChange}
-                  value={formData.name}
-                />
-              </div>
-            </div>
+        <Button type="submit" loading={loading} loadingText="Creating your account…" className="w-full">
+          Create account
+        </Button>
+      </form>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-amber-800">
-                Email address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-amber-500" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="name@example.com"
-                  onChange={handleChange}
-                  value={formData.email}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-amber-800">
-                Password
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-amber-500" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="••••••••"
-                  onChange={handleChange}
-                  value={formData.password}
-                />
-              </div>
-            </div>
-
-            {/* Two columns for age and weight */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="age" className="block text-sm font-medium text-amber-800">
-                  Age
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Calendar className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <input
-                    id="age"
-                    name="age"
-                    type="number"
-                    required
-                    className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                    placeholder="25"
-                    onChange={handleChange}
-                    value={formData.age}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="weight" className="block text-sm font-medium text-amber-800">
-                  Weight (kg)
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Weight className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <input
-                    id="weight"
-                    name="weight"
-                    type="number"
-                    className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                    placeholder="65"
-                    onChange={handleChange}
-                    value={formData.weight}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-amber-800">
-                Gender
-              </label>
-              <select
-                id="gender"
-                name="gender"
-                required
-                className="mt-1 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900"
-                onChange={handleChange}
-                value={formData.gender}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            {/* Address */}
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-amber-800">
-                Delivery address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin className="h-5 w-5 text-amber-500" />
-                </div>
-                <textarea
-                  id="address"
-                  name="address"
-                  required
-                  rows="3"
-                  className="pl-10 focus:ring-amber-500 focus:border-amber-500 block w-full border-amber-300 rounded-lg py-3 text-amber-900 placeholder-amber-400"
-                  placeholder="House no., street, city, pincode"
-                  onChange={handleChange}
-                  value={formData.address}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-amber-900 font-medium bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 shadow-md transition-all duration-300 transform hover:-translate-y-1"
-            >
-              {loading ? (
-                <span className="flex items-center">
-                  <Loader className="h-5 w-5 mr-2 animate-spin" />
-                  Creating your account…
-                </span>
-              ) : (
-                "Create Account"
-              )}
-            </button>
-          </div>
-
-          <div className="flex items-center justify-center mt-6">
-            <div className="text-sm">
-              <a href="/login" className="font-medium text-amber-600 hover:text-amber-800">
-                Already have a Govind Account? Sign in
-              </a>
-            </div>
-          </div>
-        </form>
-         <div>
-         <Signup1/>
-         </div>
-        {/* Footer */}
-        <div className="text-center text-xs text-amber-700">
-          By signing up, you agree to our Terms of Service and Privacy Policy
-        </div>
-      </div>
-    </div>
+      <Divider>or</Divider>
+      <p className="mb-3 text-center text-[12px] text-muted">Use Google for your name and email. We’ll use the details above for the rest.</p>
+      <GoogleButton text="signup_with" onCredential={handleGoogle} onError={() => setError("Google sign-up was cancelled.")} />
+    </AuthShell>
   );
 };
 

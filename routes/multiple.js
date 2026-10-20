@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { upload, uploadToCloudinary } = require("../cloudinaryConfig");
 const Item = require("../models/itemModel");
+const requireAdmin = require("../middleware/requireAdmin");
 
-router.post("/", upload.fields([{ name: "image1" }, { name: "image2" }]), async (req, res) => {
+router.post("/", requireAdmin, upload.fields([{ name: "image1" }, { name: "image2" }]), async (req, res) => {
   const { name, price, category,weight } = req.body;
 
   // Ensure both images are uploaded

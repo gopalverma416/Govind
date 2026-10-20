@@ -14,7 +14,6 @@ const multiple=require("./routes/multiple");
 
 const connectDB = require("./db");
 require("dotenv").config();
-console.log("JWT_SECRET:", process.env.JWT_SECRET); // Debugging line
 
 const app = express();
 
@@ -22,13 +21,16 @@ const app = express();
 connectDB();
 const server = http.createServer(app)
 // Initialize Socket.io
-initializeSocket(server);
+const io = initializeSocket(server);
+app.set("io", io); // lets REST routes push live chat messages
 
 
 // Middleware
 const allowedOrigins = [
     "http://localhost:3000", // dev
-    "https://govind-ochre.vercel.app" // your Vercel frontend
+    "https://govind-ochre.vercel.app", // your Vercel frontend
+    // Extra comma-separated origins for local testing, e.g. the owner app's web preview
+    ...(process.env.EXTRA_CORS_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean),
   ];
   
   app.use(cors({
@@ -55,6 +57,8 @@ app.use("/api/user-details", userDetailsRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/multiple", multiple);
 app.use("/api/rates", require("./routes/rates"));
+app.use("/api/track", require("./routes/track"));
+app.use("/api/owner", require("./routes/owner"));
 
 // fullCloudinaryTest();
 

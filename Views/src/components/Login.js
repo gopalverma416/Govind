@@ -1,206 +1,114 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { Mail, Lock, Loader, User } from "lucide-react";
-import Login1 from "./Login1";
-
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
+import { API_BASE } from "../lib/api";
+import { Alert, AuthShell, Button, Divider, Field, Input } from "./site/ui";
+import GoogleButton from "./site/GoogleButton";
+import PageMeta from "./site/PageMeta";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  // Return to the page that asked the shopper to sign in, or their account
+  const destination = location.state?.from?.pathname || "/account";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const signedIn = (token) => {
+    localStorage.setItem("token", token);
+    navigate(destination, { replace: true });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
     try {
-      const res = await axios.post("https://govind-jwellers.onrender.com/api/auth/login", formData);
-      console.log("API response:", res); // Log the response to inspect the data
-      
-      if (res.data.token) {
-        // Save token to localStorage
-        localStorage.setItem("token", res.data.token);
-        console.log("Token saved to localStorage:", localStorage.getItem("token"));
-        
-        navigate("/users"); // Redirect to the users page after successful login
-      } else {
-        // If no token, show an error message
-        console.error("Token not found in response data");
-        setError("We couldn’t sign you in. Please try again.");
-      }
-        
+      const res = await axios.post(`${API_BASE}/api/auth/login`, formData);
+      if (res.data.token) signedIn(res.data.token);
+      else setError("We couldn’t sign you in. Please try again.");
     } catch (err) {
-      setError(err.response?.data?.msg || "Login failed. Try again.");
+      setError(err.response?.status === 400 ? "That email or password isn’t right." : "We can’t reach Govind right now. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGoogle = async (credential) => {
+    setError(null);
+    try {
+      const res = await axios.post(`${API_BASE}/api/auth/google-login`, { token: credential });
+      signedIn(res.data.token);
+    } catch {
+      setError(
+        <>
+          We couldn’t sign you in with Google. New to Govind? <Link to="/signup" className="font-semibold underline">Create an account</Link> first.
+        </>
+      );
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-yellow-50 flex items-center justify-center p-6 pt-20">
-      <div className="max-w-md w-full">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="mx-auto h-20 w-20 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg mb-6">
-            <User className="h-10 w-10 text-white" />
+    <AuthShell
+      title="Sign in to Govind."
+      subtitle="Your bag, orders and saved details are waiting."
+      footer={
+        <>
+          New to Govind?{" "}
+          <Link to="/signup" className="text-brand hover:underline">Create your account<span aria-hidden="true"> ›</span></Link>
+        </>
+      }
+    >
+      <PageMeta title="Sign In" />
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <Alert>{error}</Alert>
+
+        <Field label="Email address" htmlFor="email">
+          <Input id="email" name="email" type="email" autoComplete="email" required value={formData.email} onChange={handleChange} placeholder="name@example.com" />
+        </Field>
+
+        <Field label="Password" htmlFor="password">
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted hover:text-ink"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
-          
-          <h2 className="text-3xl font-bold text-amber-900">Sign in to Govind.</h2>
-         
-          <p className="mt-2 text-amber-700">Your bag, orders and saved details are waiting.</p>
+        </Field>
+
+        <div className="flex justify-end">
+          <Link to="/forget" className="text-[14px] text-brand hover:underline">Forgotten your password?</Link>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-amber-200">
-          {/* Gold accent top bar */}
-          <div className="h-3 bg-gradient-to-r from-amber-400 to-yellow-500"></div>
-          
-          <form onSubmit={handleSubmit} className="p-8">
-            {error && (
-              <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
+        <Button type="submit" loading={loading} loadingText="Signing in…" className="w-full" disabled={!formData.email || !formData.password}>
+          Sign in
+        </Button>
+      </form>
 
-            <div className="space-y-6">
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-amber-800 mb-1">
-                  Email address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="pl-10 block w-full rounded-lg border-amber-300 shadow-sm focus:ring-amber-500 focus:border-amber-500 py-3 bg-amber-50"
-                    placeholder="you@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-amber-800 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    className="pl-10 block w-full rounded-lg border-amber-300 shadow-sm focus:ring-amber-500 focus:border-amber-500 py-3 bg-amber-50"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Remember me / Forgot password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-amber-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-amber-700">
-                    Remember me
-                  </label>
-                </div>
-
-
-                <div className="text-sm">
-               <button
-                onClick={() => navigate("/forget")}
-                className="font-medium text-amber-600 hover:text-amber-800"
-                >
-                 Forgotten your password?
-               </button>
-                </div>
-                </div> 
-
-              {/* Submit button */}
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-amber-900 font-medium bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  {loading ? (
-                    <span className="flex items-center">
-                      <Loader className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                      Signing in…
-                    </span>
-                  ) : (
-                    "Sign in"
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Create account link */}
-            <div className="mt-8 text-center">
-              <p className="text-sm text-amber-700">
-                New to Govind?{" "}
-                <a 
-                  href="/signup" 
-                  className="font-medium text-amber-600 hover:text-amber-800 underline"
-                >
-                  Create your account
-                </a>
-              </p>
-            </div>
-          </form>
-        </div>
-        <div className="relative my-6">
-  <div className="absolute inset-0 flex items-center" aria-hidden="true">
-    <div className="w-full border-t-2 border-amber-200 opacity-50"></div>
-  </div>
-  <div className="relative flex justify-center">
-    <span className="bg-white px-4 text-sm font-medium text-amber-700 
-      border border-amber-200 rounded-full 
-      shadow-sm transform transition duration-300 
-      hover:bg-amber-50 hover:text-amber-900">
-      or
-    </span>
-  </div>
-</div>
-<div>
-  <Login1/>
-</div>
-
-        {/* Security note */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-amber-700 flex items-center justify-center">
-            <Lock className="h-3 w-3 mr-1" />
-            Secure, encrypted connection
-          </p>
-        </div>
-      </div>
-    </div>
+      <Divider>or</Divider>
+      <GoogleButton text="signin_with" onCredential={handleGoogle} onError={() => setError("Google sign-in was cancelled.")} />
+    </AuthShell>
   );
 };
 

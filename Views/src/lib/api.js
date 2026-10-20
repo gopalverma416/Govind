@@ -24,10 +24,13 @@ export const fetchCategories = () =>
     return [...new Set(items.map((item) => item.category).filter(Boolean))];
   });
 
+// The cart API returns { cart: [...] } when it has items and { items: [] } when empty
+export const cartItemsFrom = (data) => data?.cart || data?.items || [];
+
 export const fetchCart = (userId) =>
   axios
     .get(`${API_BASE}/api/cart/${userId}`)
-    .then((res) => res.data.items || [])
+    .then((res) => cartItemsFrom(res.data))
     .catch(() => []);
 
 export const formatPrice = (value) =>
@@ -61,4 +64,30 @@ export const fetchMetalRates = async () => {
     basis: "spot",
     updatedAt: [gold.updatedAt, silver.updatedAt].sort().pop(),
   };
+};
+
+// Anonymous per-browser id so the owner app can count unique and live visitors
+const visitorSessionId = () => {
+  try {
+    let id = localStorage.getItem("govind:sid");
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("govind:sid", id);
+    }
+    return id;
+  } catch {
+    return "no-storage";
+  }
+};
+
+// Reports a page view for the owner's dashboard; never blocks or breaks the page
+export const trackPageView = (path) => {
+  const token = localStorage.getItem("token");
+  axios
+    .post(
+      `${API_BASE}/api/track`,
+      { sessionId: visitorSessionId(), path, referrer: document.referrer || undefined },
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    )
+    .catch(() => {});
 };

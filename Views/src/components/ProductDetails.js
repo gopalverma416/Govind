@@ -1,58 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { 
-  ShoppingCartIcon, 
-  TruckIcon, 
-  ShieldCheckIcon, 
-  GiftIcon,
-  SparklesIcon,
-  ShareIcon,
-  ScaleIcon 
-  , XIcon 
-} from "@heroicons/react/24/outline";
-
+import { Check, Minus, Plus, Share2, ShieldCheck, Truck } from "lucide-react";
 import { getUserIdFromToken } from "../utils/auth";
-import { formatPrice, titleCase } from "../lib/api";
+import { API_BASE, formatPrice, titleCase } from "../lib/api";
 import { BRAND, PRODUCT_HIGHLIGHTS, PROMISES } from "../content/site";
 import { recentlyViewed } from "../lib/savedList";
 import WishlistButton from "./site/WishlistButton";
 import RecentlyViewed from "./site/RecentlyViewed";
 import PageMeta from "./site/PageMeta";
 import { whatsappLink } from "./site/WhatsAppButton";
-import { useNavigate } from "react-router-dom";
+import { Alert, Button, Spinner } from "./site/ui";
+import Footbar from "./Footbar";
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const userId = getUserIdFromToken();
   const [item, setItem] = useState(null);
+  const [notFound, setNotFound] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const userId = getUserIdFromToken();
-
-  const navigate = useNavigate();
-  const product = {
-    name: "Splendid Filigree Work Gold Bangle",
-    imageUrl: "https://your-image-url.com/image.jpg",
-    productUrl: window.location.href
-  };
-
-  
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(product.productUrl);
-      alert('Link copied to clipboard!');
-    } catch (error) {
-      console.error('Failed to copy link:', error);
-      alert('Failed to copy the link. Please try again.');
-    }
-  };
+  const [busy, setBusy] = useState(null);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
-    axios.get(`https://govind-jwellers.onrender.com/api/items/${id}`)
+    setItem(null);
+    setNotFound(false);
+    setActiveImage(0);
+    setQuantity(1);
+    axios
+      .get(`${API_BASE}/api/items/${id}`)
       .then((response) => setItem(response.data))
-      .catch((error) => console.error("Error fetching product details:", error));
+      .catch((error) => {
+        console.error("Error fetching product details:", error);
+        setNotFound(true);
+      });
   }, [id]);
 
   // Remember this piece for the "Recently viewed" rows
@@ -60,349 +44,231 @@ const ProductDetails = () => {
     if (item?._id) recentlyViewed.add(item);
   }, [item]);
 
-  if (!item) return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-      <div className="animate-pulse w-24 h-24 bg-gray-400 rounded-full shadow-lg"></div>
-    </div>
-  );
+  if (notFound) {
+    return (
+      <main className="min-h-screen bg-white px-6 pt-32 text-center">
+        <h1 className="headline-tile">We can’t find that piece.</h1>
+        <p className="mt-3 text-[17px] text-muted">It may have sold out or moved. Explore the rest of the collection.</p>
+        <Link to="/list" className="btn-filled mt-8">Shop jewellery</Link>
+      </main>
+    );
+  }
 
-  const handleQuantityChange = (change) => {
-    setQuantity(Math.max(1, quantity + change));
-  };
+  if (!item) return <Spinner className="min-h-screen items-center" />;
 
-  const addToCart = async (item) => {
+  const productUrl = `${BRAND.siteUrl}/product/${item._id}`;
+  const images = item.images?.length ? item.images : [];
+
+  const addToBag = async () => {
     if (!userId) {
-      alert("Sign in to add pieces to your bag.");
-      return;
+      navigate("/login", { state: { from: location } });
+      return false;
     }
+    await axios.post(`${API_BASE}/api/cart/add`, {
+      userId,
+      itemId: item._id,
+      name: item.name,
+      price: item.price,
+      image: images[0],
+      quantity,
+    });
+    return true;
+  };
 
+  const handleAdd = async () => {
+    setBusy("add");
+    setNotice(null);
     try {
-      await axios.post("https://govind-jwellers.onrender.com/api/cart/add", {
-        userId,
-        itemId: item._id,
-        name: item.name,
-        price: item.price,
-        image: item.images[0],
-        quantity,
-      });
-      alert("Added to your bag.");
+      if (await addToBag()) setNotice({ tone: "success", text: "Added to your bag." });
     } catch (error) {
-      console.error("Error adding item to cart:", error);
+      console.error("Error adding item to bag:", error);
+      setNotice({ tone: "error", text: "We couldn’t add this to your bag. Please try again." });
+    } finally {
+      setBusy(null);
     }
   };
 
-  const handlePurchase = async () => {
-    navigate("/user-details", { state: { userId } });
+  // Buy adds this piece to the bag, then goes straight to checkout
+  const handleBuy = async () => {
+    setBusy("buy");
+    setNotice(null);
+    try {
+      if (await addToBag()) navigate("/user-details", { state: { userId } });
+    } catch (error) {
+      console.error("Error starting checkout:", error);
+      setNotice({ tone: "error", text: "We couldn’t start checkout. Please try again." });
+    } finally {
+      setBusy(null);
+    }
   };
+
+  const handleShare = async () => {
+    const data = { title: item.name, text: `${item.name} from ${BRAND.name}`, url: productUrl };
+    try {
+      if (navigator.share) await navigator.share(data);
+      else {
+        await navigator.clipboard.writeText(productUrl);
+        setNotice({ tone: "success", text: "Link copied." });
+      }
+    } catch {
+      // share sheet dismissed
+    }
+  };
+
+  const specs = [
+    item.weight ? { label: "Weight", value: `${item.weight} g` } : null,
+    item.category ? { label: "Collection", value: titleCase(item.category) } : null,
+    item.material ? { label: "Material", value: item.material } : null,
+  ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-4 sm:px-6 lg:px-8">
+    <main className="bg-white pt-12">
       <PageMeta
         title={item.name}
         description={item.description || `${item.name}${item.category ? `, ${titleCase(item.category)}` : ""}, handcrafted by Govind Jewellers. ${formatPrice(item.price)}.`}
-        image={item.images?.[0]}
+        image={images[0]}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Product",
           name: item.name,
-          image: item.images,
+          image: images,
           description: item.description || undefined,
           category: item.category || undefined,
           sku: item._id,
           brand: { "@type": "Brand", name: BRAND.name },
           ...(item.weight ? { weight: { "@type": "QuantitativeValue", value: item.weight, unitCode: "GRM" } } : {}),
-          offers: {
-            "@type": "Offer",
-            url: `${BRAND.siteUrl}/product/${item._id}`,
-            priceCurrency: "INR",
-            price: item.price,
-          },
+          offers: { "@type": "Offer", url: productUrl, priceCurrency: "INR", price: item.price },
         }}
       />
-      <div className="max-w-6xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden grid md:grid-cols-2 gap-12 p-12 relative">
-        {/* Decorative Elements */}
-        <div className="absolute top-6 right-6 flex space-x-4">
-          <div>
-        <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-white/70 p-3 rounded-full shadow-md hover:bg-white transition group"
-      >
-        <ShareIcon className="h-6 w-6 text-gray-700 group-hover:text-blue-500 transition" />
-      </button>
-      </div>
-        {/* Share Modal */}
-        {/* {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Share Your Discovery!</h3>
-              <button onClick={() => setIsModalOpen(false)}>
-                <ShareIcon className="h-5 w-5 text-gray-500" />
-              </button>
-            </div>
-            <div className="flex items-center mb-4">
-              <img src={item.images[0]} alt={item.name} className="h-16 w-16 rounded-lg mr-4" />
-              <p>{item.name}</p>
-            </div>
-            <div className="flex items-center mb-4">
-              <input
-                type="text"
-                value={product.productUrl}
-                readOnly
-                className="flex-1 p-2 border rounded-l-md"
+
+      <nav aria-label="Breadcrumb" className="mx-auto max-w-[1180px] px-6 pt-6 text-[12px] text-muted md:px-[22px]">
+        <Link to="/list" className="hover:text-brand">Jewellery</Link>
+        {item.category && (
+          <>
+            <span className="mx-1.5">›</span>
+            <Link to={`/list?category=${encodeURIComponent(item.category)}`} className="hover:text-brand">{titleCase(item.category)}</Link>
+          </>
+        )}
+      </nav>
+
+      <div className="mx-auto grid max-w-[1180px] gap-10 px-6 pb-16 pt-6 md:grid-cols-[1.15fr_1fr] md:gap-16 md:px-[22px]">
+        {/* Gallery */}
+        <div className="md:sticky md:top-20 md:self-start">
+          <div className="relative aspect-square overflow-hidden rounded-[24px] bg-mist">
+            {images.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt={i === activeImage ? item.name : ""}
+                aria-hidden={i !== activeImage}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${i === activeImage ? "opacity-100" : "opacity-0"}`}
               />
-              <button onClick={handleCopyLink} className="bg-red-600 text-white px-4 py-2 rounded-r-md">
-                Copy link
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
-      {isModalOpen && (
-  <div className="fixed inset-0 bg-gradient-to-br from-black/60 to-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
-      <div className="bg-gradient-to-r from-red-500 to-pink-500 p-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold text-white">Share this piece</h3>
-          <button 
-            onClick={() => setIsModalOpen(false)} 
-            className="text-white hover:bg-white/20 p-2 rounded-full transition-colors duration-300"
-          >
-            <ShareIcon className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-      
-      <div className="p-6">
-        <div className="flex items-center space-x-4 mb-6">
-          <img 
-            src={item.images[0]} 
-            alt={item.name} 
-            className="h-20 w-20 rounded-xl object-cover shadow-md"
-          />
-          <div>
-            <p className="text-lg font-semibold text-gray-800">{item.name}</p>
-            <p className="text-sm text-gray-500">Send it to someone who’d love it.</p>
-          </div>
-        </div>
-        
-        <div className="flex shadow-sm rounded-lg overflow-hidden">
-          <input
-            type="text"
-            value={product.productUrl}
-            readOnly
-            className="flex-1 p-3 bg-gray-100 text-gray-700 focus:outline-none"
-          />
-          <button 
-            onClick={handleCopyLink} 
-            className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-5 py-3 hover:from-red-700 hover:to-pink-700 transition-all duration-300 active:scale-95"
-          >
-            Copy URL
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-          <WishlistButton item={item} size={22} className="h-12 w-12" />
-        </div>
-
-        {/* Product Image Gallery */}
-        <div className="space-y-6">
-          <div className="relative group overflow-hidden rounded-2xl">
-            <div className="absolute inset-0 bg-black/10 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <SparklesIcon className="h-16 w-16 text-white/80" />
-            </div>
-            <img 
-              src={item.images[activeImage]} 
-              alt={item.name} 
-              className="w-full h-[500px] object-cover 
-              transform transition-transform duration-500 
-              group-hover:scale-110"
-            />
-          </div>
-
-          {/* Thumbnail Images */}
-          <div className="flex space-x-4">
-            {item.images.map((img, index) => (
-              <div 
-                key={index}
-                onClick={() => setActiveImage(index)}
-                className="cursor-pointer relative group"
-              >
-                <div className={`absolute inset-0 z-10 bg-black/20 
-                  ${activeImage === index ? 'opacity-0' : 'group-hover:opacity-100 opacity-0'} 
-                  transition-opacity duration-300`}></div>
-                <img 
-                  src={img} 
-                  alt={`${item.name} thumbnail ${index + 1}`}
-                  className={`w-24 h-24 object-cover rounded-xl 
-                    transform transition-all duration-300 
-                    ${activeImage === index 
-                      ? 'border-4 border-yellow-500 scale-110' 
-                      : 'opacity-70 hover:opacity-100'}`}
-                />
-              </div>
             ))}
+            <div className="absolute right-4 top-4 flex gap-2">
+              <button type="button" onClick={handleShare} aria-label="Share this piece" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-ink/70 shadow-md transition-transform hover:scale-110">
+                <Share2 size={18} />
+              </button>
+              <WishlistButton item={item} size={18} className="h-11 w-11" />
+            </div>
           </div>
+          {images.length > 1 && (
+            <div className="mt-4 flex gap-3">
+              {images.map((src, i) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`Show image ${i + 1}`}
+                  aria-current={i === activeImage}
+                  className={`h-20 w-20 overflow-hidden rounded-[12px] bg-mist ring-offset-2 transition ${i === activeImage ? "ring-2 ring-brand" : "opacity-70 hover:opacity-100"}`}
+                >
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Product Details */}
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4 
-              bg-gradient-to-r from-gray-800 to-gray-600 
-              text-transparent bg-clip-text">{item.name}</h1>
-          </div>
+        {/* Buy box */}
+        <div>
+          {item.category && <p className="text-[14px] font-semibold text-brand">{titleCase(item.category)}</p>}
+          <h1 className="mt-1 text-[32px] font-semibold leading-[1.125] text-ink md:text-[48px] md:leading-[1.08]">{item.name}</h1>
+          <p className="mt-3 text-[24px] tabular-nums text-ink">{formatPrice(item.price)}</p>
+          {item.description && <p className="mt-5 text-[17px] leading-[1.47] text-ink/80">{item.description}</p>}
 
-          <p className="text-gray-600 leading-relaxed text-lg mb-8 
-            border-l-4 border-yellow-500 pl-4">{item.description}</p>
-
-          <div className="flex items-center space-x-6 mb-8">
-            <span className="text-5xl font-extrabold text-transparent 
-              bg-gradient-to-r from-yellow-600 to-yellow-400 
-              bg-clip-text">{formatPrice(item.price)}</span>
-          </div>
-
-          {/* Shipping & Security Cards */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 
-              p-4 rounded-xl flex items-center space-x-3 
-              transform transition-transform hover:scale-105">
-              <TruckIcon className="h-8 w-8 text-blue-500" />
-              <div>
-                <h4 className="font-semibold text-gray-800">{PROMISES.delivery.title}</h4>
-                <p className="text-sm text-gray-600">{PROMISES.delivery.detail}</p>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 
-              p-4 rounded-xl flex items-center space-x-3 
-              transform transition-transform hover:scale-105">
-              <ShieldCheckIcon className="h-8 w-8 text-green-500" />
-              <div>
-                <h4 className="font-semibold text-gray-800">{PROMISES.securePayment.title}</h4>
-                <p className="text-sm text-gray-600">{PROMISES.securePayment.detail}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Product Specifications */}
-          <div className="border-t-2 border-gray-200 pt-8">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 
-              flex items-center">
-              <SparklesIcon className="h-6 w-6 mr-3 text-yellow-500" />
-              Specifications
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              {/* Weight Specification with Attractive Design */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 
-                p-4 rounded-xl flex items-center space-x-3 
-                transform transition-transform hover:scale-105 
-                shadow-md hover:shadow-lg">
-                <ScaleIcon className="h-8 w-8 text-purple-500" />
-                <div>
-                  <h4 className="font-semibold text-gray-800">Weight</h4>
-                  <p className="text-lg text-purple-700 font-bold">
-                    {item.weight} {item.weightUnit || 'g'}
-                  </p>
+          {specs.length > 0 && (
+            <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {specs.map((spec) => (
+                <div key={spec.label} className="rounded-[14px] bg-mist px-4 py-3">
+                  <dt className="text-[12px] text-muted">{spec.label}</dt>
+                  <dd className="text-[17px] font-semibold text-ink">{spec.value}</dd>
                 </div>
-              </div>
+              ))}
+            </dl>
+          )}
 
-              {/* Additional Specifications */}
-              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 
-                p-4 rounded-xl flex items-center space-x-3 
-                transform transition-transform hover:scale-105 
-                shadow-md hover:shadow-lg">
-                <SparklesIcon className="h-8 w-8 text-indigo-500" />
-                <div>
-                  <h4 className="font-semibold text-gray-800">{item.material ? 'Material' : 'Collection'}</h4>
-                  <p className="text-lg text-indigo-700 font-bold">
-                    {item.material || titleCase(item.category || 'Signature')}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quantity Selector */}
-          <div className="flex items-center space-x-6 mb-8">
-            <div className="flex items-center border-2 rounded-xl 
-              shadow-sm hover:shadow-md transition">
-              <button 
-                onClick={() => handleQuantityChange(-1)}
-                className="px-5 py-3 text-gray-600 hover:bg-gray-100 
-                rounded-l-xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                -
+          <div className="mt-8 flex items-center gap-4">
+            <span className="text-[14px] text-ink/80">Quantity</span>
+            <div className="flex items-center rounded-full border border-black/15">
+              <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Decrease quantity" className="flex h-10 w-10 items-center justify-center text-ink/70 hover:text-ink disabled:opacity-30" disabled={quantity <= 1}>
+                <Minus size={16} />
               </button>
-              <span className="px-6 py-3 text-lg font-semibold 
-                bg-gray-50">{quantity}</span>
-              <button 
-                onClick={() => handleQuantityChange(1)}
-                className="px-5 py-3 text-gray-600 hover:bg-gray-100 
-                rounded-r-xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                +
+              <span className="w-8 text-center text-[17px] tabular-nums" aria-live="polite">{quantity}</span>
+              <button type="button" onClick={() => setQuantity((q) => q + 1)} aria-label="Increase quantity" className="flex h-10 w-10 items-center justify-center text-ink/70 hover:text-ink">
+                <Plus size={16} />
               </button>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-6">
-            <button 
-              onClick={() => addToCart(item)}
-              className="bg-gradient-to-r from-yellow-500 to-yellow-600 
-              text-white py-4 rounded-xl hover:from-yellow-600 hover:to-yellow-700 
-              transition duration-300 flex items-center justify-center space-x-3 
-              font-semibold text-lg shadow-lg hover:shadow-xl 
-              transform hover:-translate-y-1"
-            >
-              <ShoppingCartIcon className="h-7 w-7" />
-              <span>Add to Bag</span>
-            </button>
-            <button 
-              onClick={handlePurchase}
-              className="bg-gradient-to-r from-gray-200 to-gray-300 
-              text-gray-800 py-4 rounded-xl hover:from-gray-300 hover:to-gray-400 
-              transition duration-300 font-semibold text-lg shadow-md 
-              flex items-center justify-center hover:shadow-lg 
-              transform hover:-translate-y-1"
-            >
-              <GiftIcon className="h-7 w-7 mr-3" />
-              Buy
-            </button>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <Button onClick={handleBuy} loading={busy === "buy"} disabled={Boolean(busy)}>Buy</Button>
+            <Button variant="secondary" onClick={handleAdd} loading={busy === "add"} disabled={Boolean(busy)}>Add to Bag</Button>
           </div>
+          {notice && (
+            <Alert tone={notice.tone} className="mt-4">
+              {notice.text} {notice.tone === "success" && notice.text.startsWith("Added") && <Link to="/purchase" className="font-semibold underline">Review bag</Link>}
+            </Alert>
+          )}
 
           <a
-            href={whatsappLink(`Hi ${BRAND.name}, I'm interested in the ${item.name} (${formatPrice(item.price)}): ${BRAND.siteUrl}/product/${item._id}`)}
+            href={whatsappLink(`Hi ${BRAND.name}, I'm interested in the ${item.name} (${formatPrice(item.price)}): ${productUrl}`)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#25D366] py-3 text-[17px] font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/10"
+            className="mt-3 flex items-center justify-center gap-2 rounded-xl py-3 text-[17px] text-[#128C7E] transition-colors hover:bg-[#25D366]/10"
           >
-            Ask about this piece on WhatsApp
+            Ask about this piece on WhatsApp<span aria-hidden="true"> ›</span>
           </a>
 
-          {/* Product Details */}
-          <div className="border-t-2 border-gray-200 pt-8">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 
-              flex items-center">
-              <SparklesIcon className="h-6 w-6 mr-3 text-yellow-500" />
-              Highlights
-            </h3>
-            <ul className="space-y-3 text-gray-600 text-base">
-              {PRODUCT_HIGHLIGHTS.map((detail, index) => (
-                <li key={index} className="flex items-center space-x-3 
-                  bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition">
-                  <span className="text-green-500">✓</span>
-                  <span>{detail}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="mt-8 divide-y divide-black/10 border-y border-black/10">
+            {[
+              { icon: Truck, ...PROMISES.delivery },
+              { icon: ShieldCheck, ...PROMISES.securePayment },
+            ].map(({ icon: Icon, title, detail }) => (
+              <li key={title} className="flex gap-3 py-4">
+                <Icon size={22} className="shrink-0 text-brand" />
+                <div>
+                  <p className="text-[17px] font-semibold text-ink">{title}</p>
+                  <p className="text-[14px] text-muted">{detail}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <h2 className="mt-8 text-[21px] font-semibold text-ink">Highlights</h2>
+          <ul className="mt-3 space-y-2">
+            {PRODUCT_HIGHLIGHTS.map((detail) => (
+              <li key={detail} className="flex gap-2.5 text-[17px] text-ink/80">
+                <Check size={18} className="mt-1 shrink-0 text-brand" />
+                {detail}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
-      <RecentlyViewed excludeId={item._id} title="You recently viewed." className="mx-auto max-w-6xl" />
-    </div>
+
+      <RecentlyViewed excludeId={item._id} title="You recently viewed." className="bg-mist" />
+      <Footbar />
+    </main>
   );
 };
 

@@ -1,42 +1,42 @@
 import React, { useState } from 'react';
-import { Mail, Key, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE } from '../lib/api';
+import { Alert, AuthShell, Button, Field, Input } from './site/ui';
+import PageMeta from './site/PageMeta';
+
+const API_URL = `${API_BASE}/api/auth`;
+const MIN_PASSWORD = 8;
+const STEPS = ['Email', 'Code', 'Password'];
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [step, setStep] = useState(1);
-  const [message, setMessage] = useState("");
-  const [status, setStatus] = useState("");
+  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState("");
-  const [phone, setPhone] = useState("");
-  const [verificationId, setVerificationId] = useState("");
-  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [token, setToken] = useState('');
 
-
-  // Base API URL
-  const API_URL = "https://govind-jwellers.onrender.com/api/auth";
+  const fail = (text) => {
+    setMessage(text);
+    setStatus('error');
+  };
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!email) {
-      setMessage("Enter a valid email address.");
-      setStatus("error");
-      return;
-    }
-    
+    if (!email) return fail('Enter a valid email address.');
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/send-otp`, { email });
-      setMessage(response.data.message || "We’ve sent a code to your email.");
-      setStatus("success");
+      await axios.post(`${API_URL}/send-otp`, { email });
+      setMessage(`We’ve sent a code to ${email}.`);
+      setStatus('success');
       setStep(2);
     } catch (error) {
-      setMessage(error.response?.data?.msg || "We couldn’t send a code. Please try again.");
-      setStatus("error");
+      fail(error.response?.status === 404 ? 'There’s no Govind Account for that email.' : 'We couldn’t send a code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -44,33 +44,16 @@ const ForgotPassword = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!otp) {
-      setMessage("Enter the code we sent to your email.");
-      setStatus("error");
-      return;
-    }
-    
+    if (!otp) return fail('Enter the code we sent to your email.');
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/verify-otp`, { 
-        email, 
-        otp: otp.toString() 
-      });
-      
-      // Make sure we're using the right property name for the token
-      if (response.data.token) {
-        setToken(response.data.token);
-      } else {
-        console.warn("Token not found in response:", response.data);
-      }
-      
-      setMessage(response.data.message || "Code verified.");
-      setStatus("success");
+      const response = await axios.post(`${API_URL}/verify-otp`, { email, otp: otp.toString() });
+      setToken(response.data.token || '');
+      setMessage('');
+      setStatus('');
       setStep(3);
-    } catch (error) {
-      console.error("OTP verification error:", error);
-      setMessage(error.response?.data?.msg || "That code isn’t right. Please try again.");
-      setStatus("error");
+    } catch {
+      fail('That code isn’t right, or it has expired. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -78,217 +61,94 @@ const ForgotPassword = () => {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!newPassword) {
-      setMessage("Enter a new password.");
-      setStatus("error");
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      setMessage("Those passwords don’t match.");
-      setStatus("error");
-      return;
-    }
-    
-    if (!token) {
-      setMessage("Your session has expired. Please start again.");
-      setStatus("error");
-      return;
-    }
-    
+    if (newPassword.length < MIN_PASSWORD) return fail(`Choose a password with at least ${MIN_PASSWORD} characters.`);
+    if (newPassword !== confirmPassword) return fail('Those passwords don’t match.');
+    if (!token) return fail('Your session has expired. Please start again.');
     setLoading(true);
     try {
-      // Log the request payload for debugging (remove in production)
-      console.log("Reset password request payload:", { token, newPassword });
-      
-      const response = await axios.post(`${API_URL}/reset-password`, { 
-        token,
-        newPassword 
-      });
-      
-      setMessage(response.data.message || "Your password has been reset.");
-      setStatus("success");
+      await axios.post(`${API_URL}/reset-password`, { token, newPassword });
+      setMessage('');
+      setStatus('');
       setStep(4);
     } catch (error) {
-      console.error("Password reset error:", error);
-      
-      // More detailed error handling
-      if (error.response) {
-        console.log("Error response data:", error.response.data);
-        setMessage(error.response.data.msg || "We couldn’t reset your password. Please try again.");
-      } else if (error.request) {
-        setMessage("We can’t reach Govind right now. Check your connection and try again.");
-      } else {
-        setMessage("Error: " + error.message);
-      }
-      
-      setStatus("error");
+      fail(error.response ? 'Your reset link has expired. Please start again.' : 'We can’t reach Govind right now. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const navigateToLogin = () => {
-    window.location.href = '/login';
-  };
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-amber-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md border border-amber-200">
-        <h2 className="mb-6 text-2xl font-bold text-center text-amber-800">Reset your password.</h2>
-        
-        {/* Progress indicator */}
-        <div className="flex justify-between mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex flex-col items-center">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 mb-2 
-                ${step >= i ? 'bg-amber-500 border-amber-500 text-white' : 'border-amber-200 text-amber-200'}`}>
-                {step > i ? <CheckCircle className="w-5 h-5" /> : i}
-              </div>
-              <span className={`text-xs ${step >= i ? 'text-amber-500' : 'text-amber-300'}`}>
-                {i === 1 ? 'Email' : i === 2 ? 'Code' : i === 3 ? 'Password' : 'Done'}
-              </span>
-            </div>
-          ))}
-        </div>
+    <AuthShell
+      title="Reset your password."
+      subtitle={step < 4 ? 'We’ll email you a code to confirm it’s you.' : undefined}
+      footer={
+        step < 4 && (
+          <>
+            Remembered it? <Link to="/login" className="text-brand hover:underline">Sign in<span aria-hidden="true"> ›</span></Link>
+          </>
+        )
+      }
+    >
+      <PageMeta title="Reset Password" />
 
-        {/* Status message */}
-        {message && (
-          <div className={`p-4 mb-6 rounded-md ${status === 'error' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
-            <div className="flex items-center">
-              {status === 'error' ? <AlertCircle className="w-5 h-5 mr-2" /> : <CheckCircle className="w-5 h-5 mr-2" />}
-              <p>{message}</p>
-            </div>
+      {step < 4 && (
+        <ol className="mb-6 flex gap-2" aria-label="Progress">
+          {STEPS.map((label, i) => (
+            <li key={label} className="flex-1">
+              <div className={`h-1 rounded-full transition-colors ${step > i ? 'bg-brand' : 'bg-black/10'}`} />
+              <p className={`mt-1.5 text-[12px] ${step === i + 1 ? 'font-semibold text-ink' : 'text-muted'}`}>{label}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      <Alert tone={status === 'success' ? 'success' : 'error'} className="mb-5">{message}</Alert>
+
+      {step === 1 && (
+        <form onSubmit={handleSendOtp} className="space-y-5">
+          <Field label="Email address" htmlFor="email">
+            <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
+          </Field>
+          <Button type="submit" loading={loading} loadingText="Sending…" className="w-full">Send code</Button>
+        </form>
+      )}
+
+      {step === 2 && (
+        <form onSubmit={handleVerifyOtp} className="space-y-5">
+          <Field label="Verification code" htmlFor="otp" hint="Check your inbox, and your spam folder.">
+            <Input id="otp" inputMode="numeric" autoComplete="one-time-code" required value={otp} onChange={(e) => setOtp(e.target.value)} className="text-center text-[24px] tracking-[0.4em]" />
+          </Field>
+          <div className="flex gap-3">
+            <Button type="button" variant="secondary" onClick={() => setStep(1)} disabled={loading} className="flex-1">Back</Button>
+            <Button type="submit" loading={loading} loadingText="Verifying…" className="flex-[2]">Verify code</Button>
           </div>
-        )}
-        
-        {/* Step 1: Enter Email */}
-        {step === 1 && (
-          <form onSubmit={handleSendOtp}>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">Email address</label>
-              <div className="relative">
-                <Mail className="absolute w-5 h-5 text-amber-400 left-3 top-3" />
-                <input
-                  type="email"
-                  className="w-full p-3 pl-10 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              className={`w-full p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-              disabled={loading}
-            >
-              {loading ? 'Sending…' : 'Send code'}
-            </button>
-          </form>
-        )}
-        
-        {/* Step 2: Verify OTP */}
-        {step === 2 && (
-          <form onSubmit={handleVerifyOtp}>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">Verification code</label>
-              <div className="relative">
-                <Key className="absolute w-5 h-5 text-amber-400 left-3 top-3" />
-                <input
-                  type="text"
-                  className="w-full p-3 pl-10 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  placeholder="Enter OTP from your email"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <p className="mt-2 text-sm text-amber-600">We've sent a verification code to {email}</p>
-            </div>
-            <div className="flex space-x-4">
-              <button
-                type="button"
-                className="w-1/3 p-3 text-amber-600 bg-white border border-amber-500 rounded-md hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                onClick={() => setStep(1)}
-                disabled={loading}
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                className={`w-2/3 p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={loading}
-              >
-                {loading ? 'Verifying…' : 'Verify code'}
-              </button>
-            </div>
-          </form>
-        )}
-        
-        {/* Step 3: Reset Password */}
-        {step === 3 && (
-          <form onSubmit={handleResetPassword}>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">New password</label>
-              <input
-                type="password"
-                className="w-full p-3 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                placeholder="Enter new password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={loading}
-              />
-              <p className="mt-1 text-xs text-amber-600">Password must be at least 8 characters long</p>
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-amber-700">Confirm password</label>
-              <input
-                type="password"
-                className="w-full p-3 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                placeholder="Confirm new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div className="flex space-x-4">
-              <button
-                type="button"
-                className="w-1/3 p-3 text-amber-600 bg-white border border-amber-500 rounded-md hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                onClick={() => setStep(2)}
-                disabled={loading}
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                className={`w-2/3 p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={loading}
-              >
-                {loading ? 'Resetting…' : 'Reset password'}
-              </button>
-            </div>
-          </form>
-        )}
-        
-        {/* Step 4: Success */}
-        {step === 4 && (
-          <div className="text-center">
-            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-amber-500" />
-            <h3 className="mb-2 text-xl font-semibold text-amber-800">Your password has been reset.</h3>
-            <p className="mb-6 text-amber-700">Sign in with your new password to continue.</p>
-            <button
-              className="w-full p-3 text-white bg-amber-600 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              onClick={navigateToLogin}
-            >
-              Sign in <ArrowRight className="inline w-4 h-4 ml-1" />
-            </button>
+        </form>
+      )}
+
+      {step === 3 && (
+        <form onSubmit={handleResetPassword} className="space-y-5">
+          <Field label="New password" htmlFor="new-password" hint={`At least ${MIN_PASSWORD} characters.`}>
+            <Input id="new-password" type="password" autoComplete="new-password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+          </Field>
+          <Field label="Confirm password" htmlFor="confirm-password">
+            <Input id="confirm-password" type="password" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          </Field>
+          <div className="flex gap-3">
+            <Button type="button" variant="secondary" onClick={() => setStep(2)} disabled={loading} className="flex-1">Back</Button>
+            <Button type="submit" loading={loading} loadingText="Resetting…" className="flex-[2]">Reset password</Button>
           </div>
-        )}
-      </div>
-    </div>
+        </form>
+      )}
+
+      {step === 4 && (
+        <div className="py-4 text-center">
+          <CheckCircle2 size={48} className="mx-auto text-emerald-500" />
+          <h2 className="mt-4 text-[21px] font-semibold text-ink">Your password has been reset.</h2>
+          <p className="mt-1 text-[17px] text-muted">Sign in with your new password to continue.</p>
+          <Link to="/login" className="btn-filled mt-6 w-full">Sign in</Link>
+        </div>
+      )}
+    </AuthShell>
   );
 };
 

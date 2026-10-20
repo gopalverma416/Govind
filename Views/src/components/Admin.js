@@ -135,7 +135,9 @@ useEffect(() => {
   }, [activeCategory]);
   const fetchAnalyticsData = async () => {
     try {
-      const response = await axios.get("https://govind-jwellers.onrender.com/api/admin/orders-stats");
+      const response = await axios.get("https://govind-jwellers.onrender.com/api/admin/orders-stats", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       setAnalyticsData(response.data);
     } catch (error) {
       console.error("Error fetching analytics data:", error);
@@ -208,7 +210,7 @@ useEffect(() => {
     try {
       setIsLoading(true);
       const response = await axios.post("https://govind-jwellers.onrender.com/api/multiple", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
   
       showNotification("Jewelry item added successfully!");

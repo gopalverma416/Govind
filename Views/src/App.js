@@ -16,6 +16,7 @@ import UserDetailsForm from "./components/UserDetailsForm";
 import Payment from "./components/PaymentPage";
 import Thankyou from "./components/Thankyou";
 import { initGA, trackPageView } from "./components/analytics";
+import { trackPageView as trackVisit } from "./lib/api";
 import { useLocation } from 'react-router-dom';
 import { useEffect } from "react";
 import ProductDetails from "./components/ProductDetails";
@@ -32,12 +33,14 @@ const AnalyticsTracker = () => {
 
   useEffect(() => {
     trackPageView(location.pathname);
+    trackVisit(location.pathname);
   }, [location]);
 
   return null;
 };
 const PrivateRoute = ({ children }) => {
-  return localStorage.getItem("token") ? children : <Navigate to="/login" />;
+  const location = useLocation();
+  return localStorage.getItem("token") ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 const App = () => {

@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from "../lib/api";
+import { getUserIdFromToken } from "../utils/auth";
+import { Alert, Button, Card, Field, Input, Select } from "./site/ui";
+import CheckoutSteps from "./site/CheckoutSteps";
+import PageMeta from "./site/PageMeta";
 
 const UserDetailsForm = () => {
   const [formData, setFormData] = useState({
@@ -12,161 +17,80 @@ const UserDetailsForm = () => {
     district: "",
     pincode: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { userId } = location.state || {};
+  const userId = location.state?.userId || getUserIdFromToken();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
-    console.log("button is clicked");
     e.preventDefault();
+    setError(null);
+    setSubmitting(true);
     try {
-      const response = await axios.post("https://govind-jwellers.onrender.com/api/user-details", {
-        userId,
-        ...formData,
-      });
-
+      const response = await axios.post(`${API_BASE}/api/user-details`, { userId, ...formData });
       if (response.status === 201) {
         navigate("/payment", { state: { userId, formData } });
       }
-    } catch (error) {
-      console.error("Error submitting user details:", error);
+    } catch (err) {
+      console.error("Error submitting user details:", err);
+      setError("We couldn’t save your delivery details. Please check them and try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-lg bg-white shadow-2xl rounded-2xl overflow-hidden">
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
-            Where should we deliver?
-          </h2>
+    <main className="min-h-screen bg-mist px-4 pb-16 pt-24 md:pt-28">
+      <PageMeta title="Delivery Details" />
+      <div className="mx-auto max-w-[560px]">
+        <CheckoutSteps current={1} />
+        <h1 className="text-center text-[32px] font-semibold leading-[1.125] text-ink md:text-[40px]">Where should we deliver?</h1>
+        <p className="mb-8 mt-2 text-center text-[17px] text-muted">Every Govind order is fully insured until it reaches you.</p>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                name="firstName"
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                placeholder="Enter first name"
-              />
+        <Card>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <Alert>{error}</Alert>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="First name" htmlFor="firstName">
+                <Input id="firstName" name="firstName" autoComplete="given-name" required value={formData.firstName} onChange={handleChange} />
+              </Field>
+              <Field label="Last name" htmlFor="lastName">
+                <Input id="lastName" name="lastName" autoComplete="family-name" required value={formData.lastName} onChange={handleChange} />
+              </Field>
             </div>
-
-            <div className="space-y-2">
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                name="lastName"
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                placeholder="Enter last name"
-              />
+            <Field label="Gender" htmlFor="gender">
+              <Select id="gender" name="gender" required value={formData.gender} onChange={handleChange}>
+                <option value="" disabled>Select</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+                <option value="Other">Other</option>
+              </Select>
+            </Field>
+            <Field label="Mobile number" htmlFor="phone" hint="We’ll call this number to confirm delivery.">
+              <Input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" pattern="[6-9][0-9]{9}" title="A 10-digit Indian mobile number" maxLength={10} required value={formData.phone} onChange={handleChange} placeholder="10-digit mobile number" />
+            </Field>
+            <Field label="Street address" htmlFor="street">
+              <Input id="street" name="street" autoComplete="street-address" required value={formData.street} onChange={handleChange} placeholder="House no., building, street" />
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="City / District" htmlFor="district">
+                <Input id="district" name="district" autoComplete="address-level2" required value={formData.district} onChange={handleChange} />
+              </Field>
+              <Field label="PIN code" htmlFor="pincode">
+                <Input id="pincode" name="pincode" inputMode="numeric" autoComplete="postal-code" pattern="[1-9][0-9]{5}" title="A 6-digit PIN code" maxLength={6} required value={formData.pincode} onChange={handleChange} />
+              </Field>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-              Gender
-            </label>
-            <select
-              id="gender"
-              name="gender"
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone number
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              name="phone"
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-              placeholder="Enter phone number"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="street" className="block text-sm font-medium text-gray-700">
-              Street address
-            </label>
-            <input
-              id="street"
-              type="text"
-              name="street"
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-              placeholder="House no. and street"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label htmlFor="district" className="block text-sm font-medium text-gray-700">
-                District
-              </label>
-              <input
-                id="district"
-                type="text"
-                name="district"
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                placeholder="Enter district"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="pincode" className="block text-sm font-medium text-gray-700">
-                Pincode
-              </label>
-              <input
-                id="pincode"
-                type="text"
-                name="pincode"
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300"
-                placeholder="Enter pincode"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3.5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-[1.02]"
-          >
-            Continue to payment
-          </button>
-        </form>
+            <Button type="submit" loading={submitting} loadingText="Saving…" className="w-full">Continue to review</Button>
+          </form>
+        </Card>
       </div>
-    </div>
+    </main>
   );
 };
 

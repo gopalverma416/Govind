@@ -2,11 +2,12 @@ const cloudinary = require("cloudinary").v2;
 const fs = require('fs');
 const path = require('path');
 
-// Configure Cloudinary with credentials
+// Configure Cloudinary from the environment; never commit credentials
+require("dotenv").config();
 cloudinary.config({
-  cloud_name: "denstpvkw",
-  api_key: "286826859161274",
-  api_secret: "nPceTG837d4AokcR7ym8iruyIIU",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Function to test Cloudinary connection

@@ -1,246 +1,148 @@
 import React, { useEffect, useState } from "react";
-import { PROMISES } from "../content/site";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Package, ShieldCheck, Truck } from "lucide-react";
+import { PROMISES } from "../content/site";
+import { API_BASE, cartItemsFrom, formatPrice } from "../lib/api";
 import { getUserIdFromToken } from "../utils/auth";
-import { ShoppingCart, CreditCard, CheckCircle, Package, Truck, Shield, Trash2 } from "lucide-react";
+import { Button, Spinner } from "./site/ui";
+import PageMeta from "./site/PageMeta";
+import Footbar from "./Footbar";
 
 const Purchase = () => {
   const [cartItems, setCartItems] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState("Credit Card");
   const [isLoading, setIsLoading] = useState(true);
+  const [removing, setRemoving] = useState(null);
   const navigate = useNavigate();
-
+  const location = useLocation();
   const userId = getUserIdFromToken();
-  console.log("User ID in Purchase:", userId);
 
   useEffect(() => {
     if (!userId) {
-      alert("Sign in to see your bag.");
-      navigate("/login");
+      navigate("/login", { replace: true, state: { from: location } });
       return;
     }
-
-    setIsLoading(true);
     axios
-      .get(`https://govind-jwellers.onrender.com/api/cart/${userId}`)
-      .then((response) => {
-        setCartItems(response.data.cart || []);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching cart:", error);
-        setIsLoading(false);
-      });
-  }, [userId, navigate]);
+      .get(`${API_BASE}/api/cart/${userId}`)
+      .then((response) => setCartItems(cartItemsFrom(response.data)))
+      .catch((error) => console.error("Error fetching cart:", error))
+      .finally(() => setIsLoading(false));
+  }, [userId, navigate, location]);
 
-  const totalPrice = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  const handleRemoveItem = async (itemId) => {
+  const handleRemoveItem = async (item) => {
+    const itemId = item.itemId?._id || item.itemId;
+    setRemoving(itemId);
     try {
-      console.log("Removing Item:", itemId._id);
-      console.log("User ID:", userId);
-      await axios.delete(`https://govind-jwellers.onrender.com/api/cart/remove/${userId}/${itemId._id}`);
-     
-      const response = await axios.get(`https://govind-jwellers.onrender.com/api/cart/${userId}`);
-      setCartItems(response.data.cart || []);
-
+      await axios.delete(`${API_BASE}/api/cart/remove/${userId}/${itemId}`);
+      const response = await axios.get(`${API_BASE}/api/cart/${userId}`);
+      setCartItems(cartItemsFrom(response.data));
     } catch (error) {
       console.error("Error removing item:", error);
+    } finally {
+      setRemoving(null);
     }
   };
 
-  const handlePurchase = async () => {
-    navigate("/user-details", { state: { userId } });
-  };
+  const checkout = () => navigate("/user-details", { state: { userId } });
+
+  const benefits = [
+    { icon: Truck, ...PROMISES.delivery },
+    { icon: ShieldCheck, ...PROMISES.hallmark },
+    { icon: Package, ...PROMISES.exchange },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gold-50 to-gold-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-gold-200 transform transition-all hover:scale-[1.01]">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-gold-500 to-gold-600 px-8 py-10 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-4xl font-bold flex items-center gap-4">
-                  <ShoppingCart className="h-10 w-10 text-white" />
-                  Your Bag
-                </h2>
-                <p className="text-gold-100 mt-2 text-lg">Review your pieces, then check out securely.</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-full">
-                <Package className="h-8 w-8 text-white" />
-              </div>
+    <main className="min-h-screen bg-white pt-12">
+      <PageMeta title="Bag" />
+      <div className="mx-auto max-w-content px-6 pb-16 pt-12 md:px-[22px] md:pt-16">
+        {isLoading ? (
+          <Spinner />
+        ) : cartItems.length === 0 ? (
+          <div className="py-12 text-center">
+            <h1 className="headline-tile">Your bag is empty.</h1>
+            <p className="mt-3 text-[17px] text-muted">Find something you love, or pick up where you left off in your wishlist.</p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link to="/list" className="btn-filled">Shop jewellery</Link>
+              <Link to="/wishlist" className="btn-outline">View wishlist</Link>
             </div>
           </div>
-
-          {/* Content */}
-          <div className="px-8 py-8">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-gold-500"></div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-6 border-b border-black/10 pb-8 text-center md:text-left">
+              <h1 className="headline-tile">Your bag total is {formatPrice(totalPrice)}.</h1>
+              <p className="text-[17px] text-muted">{PROMISES.delivery.title} {PROMISES.delivery.detail.toLowerCase()}</p>
+              <div>
+                <Button onClick={checkout} className="w-full px-10 md:w-auto">Check out</Button>
               </div>
-            ) : (
-              <>
-                {/* Cart Items */}
-                <div className="mb-10">
-                  <h3 className="text-2xl font-semibold text-gold-800 mb-6 flex items-center gap-3">
-                    <Package className="h-7 w-7 text-gold-600" />
-                    In your bag
-                  </h3>
+            </div>
 
-                  {cartItems.length > 0 ? (
-                    <div className="space-y-6">
-                      {cartItems.map((item, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center p-6 bg-gold-50 rounded-2xl border border-gold-200 hover:shadow-lg transition-all duration-300"
+            <ul>
+              {cartItems.map((item) => {
+                const itemId = item.itemId?._id || item.itemId;
+                return (
+                  <li key={itemId} className="flex gap-5 border-b border-black/10 py-8 md:gap-10">
+                    <Link to={`/product/${itemId}`} className="h-28 w-28 shrink-0 overflow-hidden rounded-[14px] bg-mist md:h-40 md:w-40">
+                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                    </Link>
+                    <div className="flex flex-1 flex-col gap-3 md:flex-row md:justify-between">
+                      <div>
+                        <Link to={`/product/${itemId}`} className="text-[21px] font-semibold text-ink hover:text-brand md:text-[24px]">{item.name}</Link>
+                        <p className="mt-1 text-[14px] text-muted">Quantity {item.quantity} · {formatPrice(item.price)} each</p>
+                      </div>
+                      <div className="flex items-start justify-between gap-6 md:flex-col md:items-end">
+                        <p className="text-[21px] font-semibold tabular-nums text-ink md:text-[24px]">{formatPrice(item.price * item.quantity)}</p>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item)}
+                          disabled={removing === itemId}
+                          className="text-[17px] text-brand hover:underline disabled:opacity-50"
                         >
-                          <div className="flex-shrink-0 mr-6">
-                            <div className="h-24 w-24 rounded-xl overflow-hidden shadow-md">
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-xl font-bold text-gold-900 mb-2">{item.name}</h4>
-                            <div className="flex items-center text-gold-700">
-                              <span className="mr-4">Quantity: {item.quantity}</span>
-                              <span className="mr-4">₹{item.price} each</span>
-                              <button
-                                onClick={() => handleRemoveItem(item.itemId)}
-                                className="flex items-center text-red-500 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 className="mr-2 h-5 w-5" />
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-2xl font-bold text-gold-900">
-                              ₹{item.price * item.quantity}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                          {removing === itemId ? "Removing…" : "Remove"}
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-16 bg-gold-50 rounded-2xl border border-gold-200">
-                      <ShoppingCart className="h-16 w-16 text-gold-400 mx-auto mb-6" />
-                      <p className="text-2xl text-gold-700 mb-4">Your bag is empty.</p>
-                      <button
-                        onClick={() => navigate("/")}
-                        className="px-6 py-3 bg-gold-500 text-white rounded-xl hover:bg-gold-600 transition-colors"
-                      >
-                        Continue shopping
-                      </button>
-                    </div>
-                  )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="ml-auto max-w-[480px] pt-8">
+              <dl className="space-y-2 text-[17px]">
+                <div className="flex justify-between">
+                  <dt className="text-ink/80">Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})</dt>
+                  <dd className="tabular-nums">{formatPrice(totalPrice)}</dd>
                 </div>
+                <div className="flex justify-between">
+                  <dt className="text-ink/80">Insured delivery</dt>
+                  <dd>Free</dd>
+                </div>
+              </dl>
+              <div className="mt-4 flex justify-between border-t border-black/10 pt-4 text-[24px] font-semibold">
+                <span>Total</span>
+                <span className="tabular-nums">{formatPrice(totalPrice)}</span>
+              </div>
+              <Button onClick={checkout} className="mt-6 w-full">Check out</Button>
+            </div>
 
-                {/* Payment Method & Order Summary */}
-                {cartItems.length > 0 && (
-                  <div className="grid md:grid-cols-2 gap-8">
-                    {/* Payment Method */}
-                    <div>
-                      <h3 className="text-2xl font-semibold text-gold-800 mb-6 flex items-center gap-3">
-                        <CreditCard className="h-7 w-7 text-gold-600" />
-                        How would you like to pay?
-                      </h3>
-                      <select
-                        value={paymentMethod}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="w-full p-4 border-2 border-gold-300 rounded-xl focus:ring-2 focus:ring-gold-500 text-gold-800 bg-gold-50"
-                      >
-                        <option>Credit Card</option>
-                        <option>UPI</option>
-                        <option>Cash on Delivery</option>
-                      </select>
-                    </div>
-
-                    {/* Order Summary */}
-                    <div>
-                      <h3 className="text-2xl font-semibold text-gold-800 mb-6">
-                        Summary
-                      </h3>
-                      <div className="bg-gold-100 p-6 rounded-2xl border border-gold-200">
-                        <div className="space-y-3 mb-4">
-                          <div className="flex justify-between text-gold-700">
-                            <span>Subtotal</span>
-                            <span className="font-semibold">₹{totalPrice}</span>
-                          </div>
-                          <div className="flex justify-between text-gold-700">
-                            <span>Shipping</span>
-                            <span className="text-green-600 font-semibold">Free</span>
-                          </div>
-                          <div className="flex justify-between text-gold-700">
-                            <span>Insurance</span>
-                            <span className="font-semibold">Included</span>
-                          </div>
-                        </div>
-                        <div className="border-t border-gold-300 my-4"></div>
-                        <div className="flex justify-between">
-                          <span className="text-2xl font-bold text-gold-900">Total</span>
-                          <span className="text-2xl font-bold text-gold-900">₹{totalPrice}</span>
-                        </div>
-                      </div>
-                    </div>
+            <ul className="mt-14 grid gap-6 rounded-[18px] bg-mist p-8 md:grid-cols-3">
+              {benefits.map(({ icon: Icon, title, detail }) => (
+                <li key={title} className="flex gap-3">
+                  <Icon size={22} className="shrink-0 text-brand" />
+                  <div>
+                    <p className="text-[17px] font-semibold text-ink">{title}</p>
+                    <p className="text-[14px] text-muted">{detail}</p>
                   </div>
-                )}
-
-                {/* Benefits */}
-                {cartItems.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-                    {[
-                      { icon: Truck, title: PROMISES.delivery.title, desc: PROMISES.delivery.detail },
-                      { icon: Shield, title: PROMISES.hallmark.title, desc: PROMISES.hallmark.detail },
-                      { icon: Package, title: PROMISES.exchange.title, desc: PROMISES.exchange.detail }
-                    ].map((benefit, index) => (
-                      <div 
-                        key={index} 
-                        className="flex flex-col items-center p-6 bg-gold-50 rounded-2xl border border-gold-200 hover:shadow-md transition-all"
-                      >
-                        <benefit.icon className="h-10 w-10 text-gold-500 mb-4" />
-                        <h4 className="font-bold text-gold-800 mb-2">{benefit.title}</h4>
-                        <p className="text-gold-600 text-sm">{benefit.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Purchase Button */}
-                {cartItems.length > 0 && (
-                  <button
-                    onClick={handlePurchase}
-                    disabled={isLoading}
-                    className="w-full mt-10 py-5 rounded-xl text-white bg-gradient-to-r from-gold-500 to-gold-600 
-                    hover:from-gold-600 hover:to-gold-700 
-                    focus:outline-none focus:ring-4 focus:ring-gold-300
-                    flex items-center justify-center gap-3 
-                    transition-all duration-300 transform hover:scale-[1.02] shadow-xl"
-                  >
-                    {isLoading ? (
-                      <div className="animate-spin h-6 w-6 border-3 border-white border-t-transparent rounded-full"></div>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-6 w-6" />
-                        Complete Purchase
-                      </>
-                    )}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
-    </div>
+      <Footbar />
+    </main>
   );
 };
 

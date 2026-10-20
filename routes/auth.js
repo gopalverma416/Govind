@@ -1,6 +1,7 @@
 const express = require("express");
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const { check, validationResult } = require("express-validator");
 require("dotenv").config();
 const nodemailer = require("nodemailer");
@@ -9,6 +10,27 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 const router = express.Router();
+
+// Accounts created through Google have no usable password
+const GOOGLE_ONLY_PASSWORD = "google_auth";
+const hashPassword = (password) => bcrypt.hash(password, 12);
+const isHashed = (value) => typeof value === "string" && /^\$2[aby]\$/.test(value);
+
+// Checks a password, upgrading legacy plain-text passwords to a bcrypt hash on success
+const verifyPassword = async (user, password) => {
+  const stored = user.password;
+  if (!stored || stored === GOOGLE_ONLY_PASSWORD) return false;
+  if (isHashed(stored)) return bcrypt.compare(password, stored);
+  if (stored !== password) return false;
+  user.password = await hashPassword(password);
+  await user.save({ validateBeforeSave: false });
+  return true;
+};
+
+const withoutPassword = (user) => {
+  const { password, ...rest } = user.toObject();
+  return rest;
+};
 
 const otpStore = new Map(); 
 
@@ -165,7 +187,6 @@ router.post("/send-otp", async (req, res) => {
 router.post("/verify-otp", async (req, res) => {
   const { email, otp } = req.body;
   const storedOtp = otpStore.get(email);
-  console.log(storedOtp);
 
   if (!storedOtp || storedOtp.otp !== parseInt(otp) || storedOtp.expiresAt < Date.now()) {
     return res.status(400).json({ msg: "Invalid or expired OTP" });
@@ -173,7 +194,6 @@ router.post("/verify-otp", async (req, res) => {
 
   otpStore.delete(email); // Remove OTP after verification
   const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "10m" });
-console.log(token);
   res.json({ msg: "OTP verified", token });
 });
 //reset password
@@ -183,20 +203,16 @@ router.post("/reset-password", async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  console.log(decoded);
     if (!decoded.email) {
     return res.status(400).json({ msg: "Invalid token data" });
      }
 
-    console.log("Decoded Token:", decoded); // Debugging
 
     
     const user = await User.findOne({ email: decoded.email });
-    console.log({user:user});
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    user.password = newPassword;
-    console.log({user:user});
+    user.password = await hashPassword(newPassword);
     user.markModified("password");
 
     await user.save({ validateBeforeSave: false }); 
@@ -241,7 +257,7 @@ router.post('/google-login', async (req, res) => {
     // Generate JWT Token
     const appToken = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(200).json({ msg: 'Login successful', token: appToken, user });
+    res.status(200).json({ msg: 'Login successful', token: appToken, user: withoutPassword(user) });
   } catch (error) {
     console.error('Google Login Error:', error.message);
     res.status(400).json({ msg: 'Google login failed' });
@@ -270,7 +286,7 @@ router.post('/google-signup', async (req, res) => {
     user = await User.create({
       name,
       email,
-      password: 'google_auth',
+      password: GOOGLE_ONLY_PASSWORD,
       role: 'user',
       age,
       gender,
@@ -281,7 +297,7 @@ router.post('/google-signup', async (req, res) => {
     // Generate JWT Token
     const appToken = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(200).json({ msg: 'Signup successful', token: appToken, user });
+    res.status(200).json({ msg: 'Signup successful', token: appToken, user: withoutPassword(user) });
   } catch (error) {
     console.error('Google Signup Error:', error.message);
     res.status(400).json({ msg: 'Google signup failed' });
@@ -297,9 +313,25 @@ router.post("/signup", async (req, res) => {
 
     if (await User.findOne({ email })) return res.status(400).json({ msg: "User already exists"});
 
-    const user = await User.create({ name, email, password, address, age, gender, weight,role: "user" });
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.json({ msg: "Signup successful", user, token});
+    const user = await User.create({ name, email, password: await hashPassword(password), address, age, gender, weight, role: "user" });
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.json({ msg: "Signup successful", user: withoutPassword(user), token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// Owner app sign-in: admins only, with a longer-lived token so the owner stays signed in on their phone
+router.post("/owner-login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ msg: "Email and password required" });
+    const user = await User.findOne({ email });
+    if (!user || !(await verifyPassword(user, password))) return res.status(400).json({ msg: "Invalid Credentials" });
+    if (user.role !== "admin") return res.status(403).json({ msg: "This account doesn't have owner access" });
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    res.json({ token, user: { _id: user._id, name: user.name, email: user.email } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server Error" });
@@ -314,9 +346,7 @@ router.post("/login", async (req, res) => {
     if (!email || !password) return res.status(400).json({ msg: "Email and password required" });
 
     const user = await User.findOne({ email });
-    if (!user || user.password !== password) return res.status(400).json({ msg: "Invalid Credentials" });
-    
-    console.log("User found:,login route", user);
+    if (!user || !(await verifyPassword(user, password))) return res.status(400).json({ msg: "Invalid Credentials" });
 
     //token 
     const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET || "default_secret", { expiresIn: "1h" });

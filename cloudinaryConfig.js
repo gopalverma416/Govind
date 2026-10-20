@@ -4,11 +4,12 @@ const path = require("path");  // ✅ Import the path module
 const fs = require("fs");
 
 
-// Configure Cloudinary with hardcoded credentials
+// Credentials come from the environment; never commit them
+require("dotenv").config();
 cloudinary.config({
-  cloud_name: "denstpvkw", 
-  api_key: "286826859161274", 
-  api_secret: "nPceTG837d4AokcR7ym8iruyIIU",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Create multer storage with manual upload

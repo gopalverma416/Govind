@@ -5,6 +5,7 @@ const multer = require("multer");
 const path = require("path"); 
 const fs = require("fs"); 
 const { upload, uploadToCloudinary } = require("../cloudinaryConfig");
+const requireAdmin = require("../middleware/requireAdmin");
 const { findByIdAndDelete } = require("../models/userModel");
 const mongoose = require("mongoose");
 
@@ -71,7 +72,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // delete the item 
-router.delete("/remove/:id",async(req,res)=>{
+router.delete("/remove/:id", requireAdmin, async(req,res)=>{
 try{
 
   const { id } = req.params;
@@ -97,7 +98,7 @@ try{
 });
 
 // POST new item
-router.post("/", upload.single("image"), async (req, res) => {
+router.post("/", requireAdmin, upload.single("image"), async (req, res) => {
   const { name, price, category } = req.body; // Added category
 
   // Ensure file was uploaded

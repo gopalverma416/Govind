@@ -57,15 +57,14 @@ const MetalRates = ({ variant = "strip" }) => {
     return (
       <div className="border-b border-black/10 py-4">
         <p className="text-[12px] font-semibold text-ink/80">Today’s metal rates</p>
-        <p className="mt-1 text-[12px] text-ink/70">
-          {items.map((item, i) => (
-            <span key={item.label} className="whitespace-nowrap">
-              {i > 0 && <span className="mx-2 text-black/20">|</span>}
+        <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5 text-[12px] text-ink/70">
+          {items.map((item) => (
+            <li key={item.label} className="whitespace-nowrap">
               {item.label} <span className="font-semibold tabular-nums text-ink">{item.value}</span>
               {item.unit}
-            </span>
+            </li>
           ))}
-        </p>
+        </ul>
         <p className="mt-1">
           {disclaimer} Updated {formatTime(rates.updatedAt)} IST.{" "}
           <Link to="/gold-rate" className="text-brand hover:underline">Gold rate calculator</Link>
