@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Govind Owner",
+    "slug": "govind-owner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.govindjewellers.owner",
+      "adaptiveIcon": {
+        "backgroundColor": "#1d1d1f",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#8a6a24",
+          "defaultChannel": "messages"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose product photos to upload to your store.",
+          "cameraPermission": "Take product photos to upload to your store.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font"
+    ],
+    "scheme": "govindowner",
+    "extra": {
+      "apiBase": "https://govind-jwellers.onrender.com",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "7f313a1b-069a-4506-807c-99bb022c476b"
+      }
+    },
+    "owner": "gopal_manit"
+  }
+}
